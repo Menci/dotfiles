@@ -1,0 +1,45 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $start := "# >>> chezmoi ssh defaults >>>" -}}
+{{- $end := "# <<< chezmoi ssh defaults <<<" -}}
+{{- $eol := "\n" -}}
+{{- if contains "\r\n" .chezmoi.stdin -}}
+{{- $eol = "\r\n" -}}
+{{- end -}}
+{{- $managed := printf "%s\nHost *\n    User root\n    ForwardAgent yes\n    AddKeysToAgent yes\n    IdentityFile ~/.ssh/id_rsa\n    ServerAliveInterval 10\n%s" $start $end | replace "\n" $eol -}}
+{{- $input := .chezmoi.stdin -}}
+{{- $starts := regexFindAll `(?m)^# >>> chezmoi ssh defaults >>>\r?$` $input -1 -}}
+{{- $ends := regexFindAll `(?m)^# <<< chezmoi ssh defaults <<<\r?$` $input -1 -}}
+{{- if ne (len $starts) (len $ends) -}}
+{{- fail "incomplete chezmoi ssh defaults marker block" -}}
+{{- end -}}
+{{- if gt (len $starts) 1 -}}
+{{- fail "multiple chezmoi ssh defaults marker blocks" -}}
+{{- end -}}
+{{- $hostStars := regexFindAll `(?m)^[ \t]*(?i:Host)[ \t]+\*[ \t]*(?:#[^\r\n]*)?\r?$` $input -1 -}}
+{{- if gt (len $hostStars) 1 -}}
+{{- fail "multiple exact Host * blocks" -}}
+{{- end -}}
+{{- $remaining := $input -}}
+{{- if eq (len $starts) 1 -}}
+  {{- if ne (len $hostStars) 1 -}}
+  {{- fail "chezmoi ssh defaults marker must contain exactly one Host * block" -}}
+  {{- end -}}
+  {{- $blocks := regexFindAll `(?ms)^# >>> chezmoi ssh defaults >>>\r?\n.*?^# <<< chezmoi ssh defaults <<<(?:\r?\n|\z)` $input -1 -}}
+  {{- if ne (len $blocks) 1 -}}
+  {{- fail "malformed chezmoi ssh defaults marker block" -}}
+  {{- end -}}
+  {{- $remaining = replace (index $blocks 0) "" $input -}}
+{{- else if eq (len $hostStars) 1 -}}
+  {{- $sectionWithNext := regexFind `(?ms)^[ \t]*(?i:Host)[ \t]+\*[ \t]*(?:#[^\r\n]*)?\r?\n.*?(?:^[ \t]*(?i:Host|Match)[ \t]+|\z)` $input -}}
+  {{- if eq $sectionWithNext "" -}}
+  {{- fail "could not parse the existing Host * block" -}}
+  {{- end -}}
+  {{- $nextPrefix := regexFind `[ \t]*(?i:Host|Match)[ \t]+\z` $sectionWithNext -}}
+  {{- $remaining = replace $sectionWithNext $nextPrefix $input -}}
+{{- end -}}
+{{- $remaining = $remaining | replaceAllRegex `(?:\r?\n)+\z` "" -}}
+{{- if eq $remaining "" -}}
+{{ printf "%s%s" $managed $eol }}
+{{- else -}}
+{{ printf "%s%s%s%s%s" $remaining $eol $eol $managed $eol }}
+{{- end -}}
