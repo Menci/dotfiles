@@ -1,0 +1,14 @@
+{{ if or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux") -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+plugin_tmp="$HOME/.cache/claude-plugin-tmp"
+mkdir -p "$plugin_tmp"
+export TMPDIR="$plugin_tmp"
+export PATH="$HOME/.local/bin:$PATH"
+
+command claude plugin marketplace add jarrodwatts/claude-hud --scope user
+command claude plugin marketplace update claude-hud
+command claude plugin install claude-hud@claude-hud --scope user
+command claude plugin update claude-hud@claude-hud --scope user
+{{ end -}}

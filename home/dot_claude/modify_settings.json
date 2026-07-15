@@ -1,0 +1,18 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $settings := dict -}}
+{{- if ne (trim .chezmoi.stdin) "" -}}
+{{- $settings = fromJson .chezmoi.stdin -}}
+{{- if not (kindIs "map" $settings) -}}
+{{- fail "Claude settings must be a JSON object" -}}
+{{- end -}}
+{{- end -}}
+{{- $command := `node "$HOME/.claude/plugins/claude-hud/statusline.mjs"` -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{- $cmd := joinPath (env "SystemRoot") "System32" "cmd.exe" -}}
+{{- $launcher := joinPath .chezmoi.homeDir ".claude" "plugins" "claude-hud" "statusline.mjs" -}}
+{{- $command = printf `%s /d /s /c ""node" "%s""` $cmd $launcher -}}
+{{- end -}}
+{{- $settings = $settings | setValueAtPath "statusLine" (dict "type" "command" "command" $command) -}}
+{{- $settings = $settings | setValueAtPath "skipDangerousModePermissionPrompt" true -}}
+{{- $settings = $settings | setValueAtPath "attribution" (dict "commit" "" "pr" "") -}}
+{{- $settings | toPrettyJson -}}

@@ -1,0 +1,18 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+$claude = Get-Command claude.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+$operations = @(
+    @('plugin', 'marketplace', 'add', 'jarrodwatts/claude-hud', '--scope', 'user'),
+    @('plugin', 'marketplace', 'update', 'claude-hud'),
+    @('plugin', 'install', 'claude-hud@claude-hud', '--scope', 'user'),
+    @('plugin', 'update', 'claude-hud@claude-hud', '--scope', 'user')
+)
+
+foreach ($arguments in $operations) {
+    & $claude.Path @arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Claude plugin command failed with exit code $LASTEXITCODE."
+    }
+}
+{{ end -}}
