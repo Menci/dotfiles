@@ -1,0 +1,45 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+$winget = Get-Command winget.exe -CommandType Application -ErrorAction Stop
+$arguments = @(
+    'install',
+    '--id', 'Schniz.fnm',
+    '--exact',
+    '--source', 'winget',
+    '--silent',
+    '--accept-source-agreements',
+    '--accept-package-agreements',
+    '--disable-interactivity'
+)
+
+& $winget.Path @arguments
+if ($LASTEXITCODE -ne 0) {
+    throw "winget.exe failed to install fnm with exit code $LASTEXITCODE."
+}
+
+$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+$env:Path = $machinePath + [IO.Path]::PathSeparator + $userPath + [IO.Path]::PathSeparator + $env:Path
+
+$fnm = Get-Command fnm.exe -CommandType Application -ErrorAction Stop
+& $fnm.Path env --shell powershell | Out-String | Invoke-Expression
+
+& $fnm.Path install --lts --progress never
+if ($LASTEXITCODE -ne 0) {
+    throw "fnm failed to install Node.js with exit code $LASTEXITCODE."
+}
+
+& $fnm.Path default lts-latest
+if ($LASTEXITCODE -ne 0) {
+    throw "fnm failed to set the default Node.js version with exit code $LASTEXITCODE."
+}
+
+& $fnm.Path use lts-latest
+if ($LASTEXITCODE -ne 0) {
+    throw "fnm failed to activate Node.js with exit code $LASTEXITCODE."
+}
+
+node.exe --version
+npm.cmd --version
+{{ end -}}

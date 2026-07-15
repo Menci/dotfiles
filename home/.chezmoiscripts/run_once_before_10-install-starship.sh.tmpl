@@ -1,0 +1,105 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+set -eu
+
+brew install starship
+command -v starship >/dev/null
+{{ else if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+. /etc/os-release
+
+# Upstream package support and version floors:
+# https://github.com/starship/starship/blob/8eb25b8130d1b7bf0c98c71d6f978224814b5208/README.md#L225-L287
+install_fallback() {
+  curl -sS https://starship.rs/install.sh | sh
+}
+
+version_at_least() {
+  current_major=${VERSION_ID%%.*}
+  current_minor=${VERSION_ID#*.}
+  if [ "$current_minor" = "$VERSION_ID" ]; then
+    current_minor=0
+  else
+    current_minor=${current_minor%%.*}
+  fi
+  [ "$current_major" -gt "$1" ] || {
+    [ "$current_major" -eq "$1" ] && [ "$current_minor" -ge "$2" ]
+  }
+}
+
+case "$ID" in
+  debian)
+    if version_at_least 13 0; then
+      sudo apt-get update
+      sudo apt-get install --yes starship
+    else
+      install_fallback
+    fi
+    ;;
+  ubuntu)
+    if version_at_least 25 4; then
+      sudo apt-get update
+      sudo apt-get install --yes starship
+    else
+      install_fallback
+    fi
+    ;;
+  arch | manjaro)
+    sudo pacman --sync --needed --noconfirm starship
+    ;;
+  fedora)
+    if version_at_least 40 0; then
+      sudo dnf copr enable --assumeyes atim/starship
+      sudo dnf install --assumeyes starship
+    else
+      install_fallback
+    fi
+    ;;
+  centos)
+    if version_at_least 7 0; then
+      sudo dnf copr enable --assumeyes atim/starship
+      sudo dnf install --assumeyes starship
+    else
+      install_fallback
+    fi
+    ;;
+  alpine)
+    if version_at_least 3 13; then
+      sudo apk add starship
+    else
+      install_fallback
+    fi
+    ;;
+  opensuse-leap | opensuse-tumbleweed)
+    sudo zypper --non-interactive install starship
+    ;;
+  void)
+    sudo xbps-install --sync --yes starship
+    ;;
+  *)
+    install_fallback
+    ;;
+esac
+
+command -v starship >/dev/null
+{{ else if eq .chezmoi.os "freebsd" -}}
+#!/bin/sh
+set -eu
+
+sudo pkg install --yes starship
+command -v starship >/dev/null
+{{ else if eq .chezmoi.os "android" -}}
+#!/bin/sh
+set -eu
+
+pkg install --yes starship
+command -v starship >/dev/null
+{{ else if ne .chezmoi.os "windows" -}}
+#!/bin/sh
+set -eu
+
+curl -sS https://starship.rs/install.sh | sh
+command -v starship >/dev/null
+{{ end -}}

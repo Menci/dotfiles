@@ -1,0 +1,17 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+# agents.toml: {{ include "dot_agents/agents.toml" | sha256sum }}
+$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+$env:Path = $machinePath + [IO.Path]::PathSeparator + $userPath + [IO.Path]::PathSeparator + $env:Path
+
+$fnm = Get-Command fnm.exe -CommandType Application -ErrorAction Stop
+& $fnm.Path env --shell powershell | Out-String | Invoke-Expression
+
+$npx = Get-Command npx.cmd -CommandType Application -ErrorAction Stop | Select-Object -First 1
+& $npx.Path --yes --prefer-online '@sentry/dotagents@latest' --user install
+if ($LASTEXITCODE -ne 0) {
+    throw "dotagents failed with exit code $LASTEXITCODE."
+}
+{{ end -}}

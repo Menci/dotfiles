@@ -1,0 +1,22 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+brew install fnm
+{{ else if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
+export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/fnm:$PATH"
+{{ end -}}
+{{ if or (eq .chezmoi.os "darwin") (eq .chezmoi.os "linux") -}}
+
+fnm_env="$(fnm env --shell bash)"
+eval "$fnm_env"
+fnm install --lts --progress never
+fnm default lts-latest
+fnm use lts-latest
+node --version
+npm --version
+{{ end -}}

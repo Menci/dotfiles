@@ -1,0 +1,145 @@
+version = 1
+agents = []
+
+[trust]
+github_orgs = ["antfu", "cloudflare", "guiiai", "moeru-ai", "vercel-labs"]
+
+[[skills]]
+name = "antfu"
+source = "antfu/skills"
+path = "skills/antfu"
+
+[[skills]]
+name = "nuxt"
+source = "antfu/skills"
+path = "skills/nuxt"
+
+[[skills]]
+name = "pinia"
+source = "antfu/skills"
+path = "skills/pinia"
+
+[[skills]]
+name = "pnpm"
+source = "antfu/skills"
+path = "skills/pnpm"
+
+[[skills]]
+name = "slidev"
+source = "antfu/skills"
+path = "skills/slidev"
+
+[[skills]]
+name = "tsdown"
+source = "antfu/skills"
+path = "skills/tsdown"
+
+[[skills]]
+name = "turborepo"
+source = "antfu/skills"
+path = "skills/turborepo"
+
+[[skills]]
+name = "unocss"
+source = "antfu/skills"
+path = "skills/unocss"
+
+[[skills]]
+name = "vite"
+source = "antfu/skills"
+path = "skills/vite"
+
+[[skills]]
+name = "vitepress"
+source = "antfu/skills"
+path = "skills/vitepress"
+
+[[skills]]
+name = "vitest"
+source = "antfu/skills"
+path = "skills/vitest"
+
+[[skills]]
+name = "vue"
+source = "antfu/skills"
+path = "skills/vue"
+
+[[skills]]
+name = "vue-best-practices"
+source = "antfu/skills"
+path = "skills/vue-best-practices"
+
+[[skills]]
+name = "vue-router-best-practices"
+source = "antfu/skills"
+path = "skills/vue-router-best-practices"
+
+[[skills]]
+name = "vue-testing-best-practices"
+source = "antfu/skills"
+path = "skills/vue-testing-best-practices"
+
+[[skills]]
+name = "vueuse-functions"
+source = "antfu/skills"
+path = "skills/vueuse-functions"
+
+[[skills]]
+name = "web-design-guidelines"
+source = "antfu/skills"
+path = "skills/web-design-guidelines"
+
+[[skills]]
+name = "cloudflare"
+source = "cloudflare/skills"
+path = "skills/cloudflare"
+
+[[skills]]
+name = "durable-objects"
+source = "cloudflare/skills"
+path = "skills/durable-objects"
+
+[[skills]]
+name = "workers-best-practices"
+source = "cloudflare/skills"
+path = "skills/workers-best-practices"
+
+[[skills]]
+name = "wrangler"
+source = "cloudflare/skills"
+path = "skills/wrangler"
+
+[[skills]]
+name = "eventa"
+source = "moeru-ai/eventa"
+path = "skills/eventa"
+
+[[skills]]
+name = "injeca"
+source = "moeru-ai/injeca"
+path = "skills/injeca"
+
+[[skills]]
+name = "xsai"
+source = "moeru-ai/xsai"
+path = "skills/xsai"
+
+[[skills]]
+name = "logg"
+source = "guiiai/logg"
+path = "skills/logg"
+
+[[skills]]
+name = "vercel-composition-patterns"
+source = "vercel-labs/agent-skills"
+path = "skills/composition-patterns"
+
+[[skills]]
+name = "vercel-react-best-practices"
+source = "vercel-labs/agent-skills"
+path = "skills/react-best-practices"
+
+[[skills]]
+name = "find-skills"
+source = "vercel-labs/skills"
+path = "skills/find-skills"

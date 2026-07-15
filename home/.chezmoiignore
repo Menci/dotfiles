@@ -1,0 +1,9 @@
+{{ if ne .chezmoi.os "windows" }}
+Documents/
+{{ end }}
+{{ if ne .chezmoi.os "darwin" }}
+.config/shell/aliases.darwin.sh
+{{ end }}
+{{ if ne .chezmoi.os "linux" }}
+.config/shell/aliases.linux.sh
+{{ end }}

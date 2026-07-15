@@ -1,0 +1,17 @@
+{{- $start := "# >>> chezmoi dotfiles >>>" -}}
+{{- $end := "# <<< chezmoi dotfiles <<<" -}}
+{{- $block := printf "%s\n%s\n%s" $start .loader $end -}}
+{{- $replacement := replace "$" "$$" $block -}}
+{{- $hasStart := contains $start .stdin -}}
+{{- $hasEnd := contains $end .stdin -}}
+{{- if ne $hasStart $hasEnd -}}
+{{- fail "incomplete chezmoi dotfiles marker block" -}}
+{{- else if $hasStart -}}
+{{- .stdin | replaceAllRegex `(?ms)^# >>> chezmoi dotfiles >>>\n.*?^# <<< chezmoi dotfiles <<<` $replacement -}}
+{{- else if eq .stdin "" -}}
+{{ printf "%s\n" $block }}
+{{- else if hasSuffix "\n" .stdin -}}
+{{ printf "%s\n%s\n" .stdin $block }}
+{{- else -}}
+{{ printf "%s\n\n%s\n" .stdin $block }}
+{{- end -}}

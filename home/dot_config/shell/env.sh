@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ "${_DOTFILES_ENV_LOADED:-}" != 1 ]; then
+  _DOTFILES_ENV_LOADED=1
+
+  case ":$PATH:" in
+    *:"$HOME/.local/bin":*) ;;
+    *) PATH="$HOME/.local/bin:$PATH" ;;
+  esac
+
+  if [ "$(uname -s)" = Linux ]; then
+    fnm_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fnm"
+    case ":$PATH:" in
+      *:"$fnm_dir":*) ;;
+      *) PATH="$fnm_dir:$PATH" ;;
+    esac
+    unset fnm_dir
+  fi
+  export PATH
+
+  if [ -r "$HOME/.config/shell/local.sh" ]; then
+    . "$HOME/.config/shell/local.sh"
+  fi
+fi

@@ -1,0 +1,23 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+$winget = Get-Command winget.exe -CommandType Application -ErrorAction Stop
+$arguments = @(
+    'install',
+    '--id', 'Starship.Starship',
+    '--exact',
+    '--source', 'winget',
+    '--scope', 'user',
+    '--silent',
+    '--accept-source-agreements',
+    '--accept-package-agreements',
+    '--disable-interactivity'
+)
+
+& $winget.Path @arguments
+$exitCode = $LASTEXITCODE
+
+if ($exitCode -ne 0) {
+    throw "winget.exe failed to install Starship with exit code $exitCode."
+}
+{{ end -}}

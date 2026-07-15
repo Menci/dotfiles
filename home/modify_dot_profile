@@ -1,0 +1,2 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- includeTemplate "modify-shell-rc" (dict "stdin" .chezmoi.stdin "loader" `. "$HOME/.config/shell/profile.sh"`) -}}
