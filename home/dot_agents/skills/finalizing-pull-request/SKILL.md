@@ -1,86 +1,68 @@
 ---
 name: finalizing-pull-request
-description: Use when a Pull Request is ready for its final pre-squash verification and handoff.
+description: Use when a Pull Request is ready for final pre-squash verification, description and title synchronization, squash-message drafting, and an optional user-authorized squash merge.
 ---
 
 # Finalizing a Pull Request
 
-## 1. Push local changes
+## 1. Synchronize and push
 
-Push the branch. If the PR conflicts with its base, resolve the conflicts and push again. Prefer merging the base into the branch over rebasing: feature branches will be squashed, and a merge avoids resolving the same conflict across multiple commits.
+Push local changes and fetch the current base. If the PR conflicts with its base, merge the base into the feature branch, resolve conflicts, and push again. Prefer merging over rebasing because the PR will be squashed and a merge avoids replaying conflict resolution across feature commits.
 
-## 2. Rewrite the PR description — only for a PR opened by the current user
+## 2. Rewrite the PR description only when owned by the current user
 
-Compare the PR author with the authenticated GitHub user. If they differ, skip this step entirely. Do not edit the description or comment on the PR unless the user explicitly asks.
+Compare the PR author with the authenticated GitHub user. If they differ, do not edit the description or comment unless the user explicitly asks.
 
-For an owned PR, rewrite the body as a single-pass description of the final branch state, as if submitting the exact final diff for the first time. Do not mention discarded approaches, review rounds, or in-branch history.
+For an owned PR, rewrite the body as a single-pass description of the final diff, as if submitting it for the first time. Do not mention discarded approaches, review rounds, or in-branch history.
 
-- Use natural Markdown wrapping; do not hard-wrap prose like a commit message.
-- Make the Test Plan a GitHub task list. Its checkboxes are updated in the next step.
-- Remove personal information beyond identities already exposed by Git. This includes absolute local paths, unrelated personal handles, and personal IP addresses or domains. Public services such as GitHub, npm, and public CDNs are fine.
+- Use natural Markdown wrapping rather than commit-message hard wrapping.
+- Express the Test Plan as a GitHub task list.
+- Preserve a checked item when its prior result remains reusable under step 3; do not reset all checkboxes mechanically.
+- Remove personal information beyond identities already exposed by Git. Public services such as GitHub, npm, and public CDNs are fine; local paths, unrelated handles, personal IPs, and private domains are not.
 
-## 3. Run the Test Plan
+## 3. Verify the Test Plan
 
-Execute each task-list item. Use a headless browser for browser-driven checks, using the repository's existing tooling or a one-off headless Chromium. Check an item only after it passes, and fix failures before checking it.
+For each task-list item, first decide whether an existing checked result is still valid. Do not rerun an already-checked item when nothing that could affect its result has changed since it was checked. This includes the tested code, relevant dependencies and configuration, synchronized base, runtime environment, and any external service behavior the item is intended to verify.
 
-Leave checks that genuinely require an unavailable real device, paid service, external account, or equivalent resource unchecked. Explain every unchecked item in the final handoff.
+Reuse a prior result only when its successful output is available and the unchanged state can be established. If relevant state changed or the prior evidence cannot be verified, rerun the item. Use a headless browser for browser-driven checks through the repository's tooling or a one-off headless Chromium. Fix failures before checking an item.
 
-If step 2 allowed description edits, update its checkboxes. Otherwise, report results locally without editing or commenting on the PR.
+Leave checks that genuinely require an unavailable device, paid service, external account, or equivalent resource unchecked, and explain each one in the final handoff. If step 2 allowed description edits, update the checkboxes; otherwise report results locally without editing or commenting on the PR.
 
 ## 4. Draft the squash commit message
 
 Write a single-pass narrative of the final feature or fix, not a changelog of the PR's evolution.
 
-- Give the subject one coherent intent. Do not list separate changes as “X + Y” or “X and Y.” If the diff has no honest unifying subject, raise that the PR should be split.
+- Give the subject one coherent intent. If the diff has no honest unifying subject, raise that the PR should be split.
 - End the first line with ` (#N)`, where `N` is the PR number.
 - Match recent commit-message style on the base branch.
 - Hard-wrap the body at approximately 72 columns unless the project consistently uses another width.
 - Remove personal information under the same rule as the PR description.
 
-### Attribute only the PR's own human contributions
+### Attribute only retained human contributions
 
-`Co-Authored-By` represents authorship of content in the final feature diff. It does not represent branch maintenance, integration work, tool operation, or commits that merely became reachable from the branch.
+`Co-Authored-By` represents authorship of content retained in the final PR diff, not branch maintenance, integration work, tool operation, or commits that merely became reachable through a base merge.
 
-Build the candidate set from the PR-owned delta against the current base, not from every author reachable in branch history:
+Build candidates from non-merge commits in the synchronized `base..head` range and applied review suggestions. For every non-creator human, confirm that their semantic contribution survives in the final diff and that a valid Git name/email identity is available. Never infer an email.
 
-1. Inspect non-merge commits in `base..head` after the base has been synchronized (for example, `git log --no-merges origin/<base>..HEAD`).
-2. For each non-PR-creator human candidate, inspect the commit or applied review suggestion and confirm that their authored content remains in the PR's final feature diff.
-3. Add a trailer only when that semantic contribution is confirmed and a valid Git name/email identity is available. Never infer or invent an email.
+Include retained PR-specific work by a non-creator human and retained concrete reviewer suggestions with valid identities. Exclude base authors, merge-only operators, identities used only for mechanical integration, bots, `web-flow`, AI identities, generated commits, and contributions absent from the final diff. When uncertain, omit the trailer.
 
-Include:
-
-- A non-PR-creator human whose PR-specific commit contributes content retained in the final diff.
-- A human reviewer whose concrete code or documentation suggestion was applied and retained, when a valid trailer identity is available.
-
-Exclude:
-
-- Authors of commits inherited from the base branch, including commits introduced by merging the base into the PR branch.
-- The author or committer of a merge commit created only to synchronize the base or resolve conflicts.
-- A Git identity used only by the person or agent operating tools, pushing, formatting, renumbering migrations after a collision, or performing other integration work.
-- Bots, `web-flow`, AI identities, and generated commits.
-- Anyone whose apparent contribution does not survive in the final PR diff.
-
-Do not use `git log <merge-base>..HEAD` author output alone as proof of co-authorship: after a base merge, that history can include base authors and the integration operator. When uncertain whether a person authored retained feature content, omit the trailer rather than assigning false credit.
-
-Output the message directly in chat as a fenced `text` block. Do not save it to a file or post it as a PR comment.
+Output the complete message directly in chat as a fenced `text` block. Do not save it to a file or post it as a PR comment.
 
 ## 5. Sync the PR title
 
-This step has no ownership gate. The PR title becomes the squash commit subject, so it must match the drafted first line without the trailing ` (#N)`; GitHub appends the PR number on squash.
-
-Use:
+The PR title becomes the squash subject, so set it to the drafted first line without the trailing ` (#N)`. This step has no ownership gate.
 
 ```bash
 gh pr edit <N> --title "<subject without (#N)>"
 ```
 
-## 6. Hand off the squash
+## 6. Report and choose who squashes
 
-Report:
+Report what was pushed, every unchecked Test Plan item and its reason, the updated PR title, and the complete squash message in the same fenced `text` block.
 
-- What was pushed.
-- Every unchecked Test Plan item and its reason.
-- The complete squash commit message again in the same fenced `text` block.
-- The updated PR title.
+Ask the user to choose between:
 
-The user performs the squash merge.
+1. The user performs the squash merge.
+2. The agent performs the squash merge using the drafted subject and body.
+
+Do not merge without an explicit choice. If the current request already clearly made this choice, do not ask again; follow it after the verification report. When authorized to merge, run the squash merge non-interactively, verify the PR is merged, and report the resulting merge commit.

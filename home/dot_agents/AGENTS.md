@@ -110,9 +110,16 @@
 - 在进行命令执行时，你 SHOULD 灵活使用带有 `||` 和 `&&` 的脚本，用编程化的判断来避免你自身的多轮次的判断。
 - 编写 skills 时，你 SHOULD 用简洁的语言描述要做的事情和用户指出的注意事项，不需要太详细的指示。
 
-## 设计 UI
+## 前端与 UI
 
 - 当设计前端 UI/UX 时，我会希望你生成 mockup 给我看，mockup 必须是和最终的视觉样式完全一致（不能使用简易样式代替），充分反映各种情况下的数据，并能够在仅前端进行交互。你可以生成多个让我来挑选。
+- 对于包含前端后端的项目，当用户要求使用 headless browser 验证时，你可以使用 playwright 等工具，你 MUST 不在系统上留下浏览器安装（如，不要安装浏览器到 /Applications）。优先使用本地已有的浏览器安装，或者安装临时实例。
+
+## 对 Codex 的特殊指示
+
+- 未经用户的显式允许，MUST NOT 使用 Computer Use。
+- SHOULD NOT 使用 openaiDeveloperDocs MCP，因为它往往无法访问。而是 SHOULD 使用 GitHub 上的 OpenAI 文档，或使用 Jina 访问 OpenAI。
+- 当需要使用无头浏览器时，SHOULD NOT 使用所谓的「内置浏览器」。此处没有特殊原因去禁止它，但实测到它永远是不可用状态。
 
 ## 对 Claude 的特殊指示
 
