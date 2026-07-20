@@ -12,6 +12,8 @@
 - 你的一切工作不应担忧 token 的累计消耗量，但上下文窗口的消耗仍然需要考虑。
 - 不要轻易放弃目标实践。遇到表面上不工作但应当工作的思路或实践时，你 SHOULD 多尝试几次。对于用户的明确要求，在一切调研都判定它使用一切手段（包括 hack、workaround、patch 等）都无解之前，不要去追求「退而求其次」的解决方法。
 - 当用户提出指示更新文档，或你想要更新文档时，你 MUST 重写整个文档，把文档重构为合理状态，MUST NOT 以仅追加的方式更新任何文档。你 MUST 搜索所有文档并做对应的同步更新，历史 archive 除外。当修改了代码时，你 MUST 寻找一切可能有关联的文档并一并更新，除非没有对应可更新的文档。
+- 在需要估算工时的时候，MUST 使用「分钟」作为单位。
+- 讨论功能实现时，MUST NOT 提「第一版」如何如何，而是以最终交付的视角去看待问题，MUST NOT 偷工减料。
 
 ## 软件工程
 
@@ -70,6 +72,7 @@
 - 使用 git worktree 时，你 SHOULD 在合并到 main 之后删除 worktree。你 SHOULD 在 worktree 内部进行冲突 resolve，预览 `git log` 和 `git diff` 没有问题之后 fast-forward 到 main 上。避免在 main 上 resolve conflicts，仅当 main 上需要 stash & pop 并在 pop 时产生了冲突时，允许在 main 上 resolve conflict。
 - 在任何 worktree / feature branch 上，你 SHOULD 保持所有 commits，尽量不要 amend / rebase，你不需要在正式分支上 enforce linear history，而是 SHOULD 将开发修订过程呈现出来。除非是修改 git commit 的元数据（如 Author），或是移除历史 commit 里的敏感信息。
 - 你的任何要 commit 的代码，SHOULD NOT 包含 repo 在磁盘上的路径，SHOULD NOT 包含用户目录等仅在一个用户、一台电脑上有效的路径。不允许的绝对路径包括但不限于「本机的 FFXIV 安装在 `F:\FFXIV`」「本机用户目录是 `/home/menci`」。允许的绝对路径包括但不限于「某个软件的 common 安装路径，如 macOS 的 Edge 安装在 `/Applications/Microsoft Edge.app`」「对于 WSL-only 的项目，记录 `/mnt/m/Windows/xxx` 被用于访问 Windows 系统文件」。
+- 对一般的 commit，可以 amend 并 force push。但对于 PR squash commit，不能 amend，因为它被 PR 所引用。
 - 当正确重写了已存在于上游的历史时，使用 force push（你需要判断这种情况，是本地重写了历史，还是远端重写了历史）。在合并分支遇到冲突时考虑是否是被 force push 过。
 - 在 rebase 或者 amend 时，你 SHOULD 确保 committer 仍然不变（往往和 author 一致），commit date 仍然不变（往往和 author date 一致）。
 - 如果你所修改的分支，已经创建了 PR，无论这个 PR 是不是你创建的，你都必须立刻 commit push。在 PR 内部不鼓励 amend（如无特殊说明，默认 PR 最终会被 squash，所以 PR 上鼓励堆叠 commit 以及非线性 merge）。
