@@ -2,6 +2,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+{{ include ".chezmoitemplates/sanitize-wsl-path" }}
+
 plugin_tmp="$HOME/.cache/claude-plugin-tmp"
 mkdir -p "$plugin_tmp"
 export TMPDIR="$plugin_tmp"

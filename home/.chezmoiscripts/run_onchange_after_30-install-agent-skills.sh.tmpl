@@ -3,6 +3,8 @@
 set -euo pipefail
 
 # agents.toml: {{ include "dot_agents/agents.toml" | sha256sum }}
+{{ include ".chezmoitemplates/sanitize-wsl-path" }}
+
 {{ if eq .chezmoi.os "linux" -}}
 export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/fnm:$PATH"
 {{ end -}}

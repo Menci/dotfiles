@@ -1,0 +1,35 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+{{ include ".chezmoitemplates/sanitize-wsl-path" }}
+
+if ! command -v curl >/dev/null || ! command -v unzip >/dev/null; then
+  if [ "$(id -u)" -eq 0 ]; then
+    run_as_root() { "$@"; }
+  else
+    run_as_root() { sudo "$@"; }
+  fi
+
+  if command -v apt-get >/dev/null; then
+    run_as_root apt-get update
+    run_as_root apt-get install --yes curl unzip
+  elif command -v pacman >/dev/null; then
+    run_as_root pacman --sync --needed --noconfirm curl unzip
+  elif command -v dnf >/dev/null; then
+    run_as_root dnf install --assumeyes curl unzip
+  elif command -v apk >/dev/null; then
+    run_as_root apk add curl unzip
+  elif command -v zypper >/dev/null; then
+    run_as_root zypper --non-interactive install curl unzip
+  elif command -v xbps-install >/dev/null; then
+    run_as_root xbps-install --sync --yes curl unzip
+  else
+    printf 'Bootstrap requires curl and unzip, but no supported package manager was found.\n' >&2
+    exit 1
+  fi
+
+  command -v curl >/dev/null
+  command -v unzip >/dev/null
+fi
+{{ end -}}

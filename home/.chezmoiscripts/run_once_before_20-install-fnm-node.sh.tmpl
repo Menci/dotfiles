@@ -7,6 +7,8 @@ brew install fnm
 #!/usr/bin/env bash
 set -euo pipefail
 
+{{ include ".chezmoitemplates/sanitize-wsl-path" }}
+
 curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
 export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/fnm:$PATH"
 {{ end -}}

@@ -1,0 +1,34 @@
+# WSL appends translated Windows directories to PATH by default. Keeping
+# Windows-backed paths out prevents Linux automation from resolving their
+# shims and executables.
+# https://github.com/MicrosoftDocs/WSL/blob/bf89ba7aaf75e490670b6521435cf88fe10e3610/WSL/wsl-config.md#L107-L116
+# https://github.com/microsoft/WSL/blob/e6db5668edaa949df11ab4d8e66243b53c92c73d/test/linux/unit_tests/wslpath.c#L224-L255
+# https://github.com/microsoft/WSL/blob/e6db5668edaa949df11ab4d8e66243b53c92c73d/test/linux/unit_tests/wslpath.c#L397-L422
+is_wsl=
+if [ -n "${WSL_INTEROP:-}" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
+  is_wsl=1
+else
+  # https://github.com/microsoft/WSL/blob/e6db5668edaa949df11ab4d8e66243b53c92c73d/src/linux/init/util.cpp#L1547-L1569
+  case "$(/usr/bin/uname -r)" in
+    *[Mm][Ii][Cc][Rr][Oo][Ss][Oo][Ff][Tt]*) is_wsl=1 ;;
+  esac
+fi
+
+if [ "$is_wsl" = 1 ]; then
+  remaining_path=$PATH:
+  sanitized_path=
+  while [ -n "$remaining_path" ]; do
+    path_entry=${remaining_path%%:*}
+    remaining_path=${remaining_path#*:}
+    translated_path=$(/bin/wslpath -w "$path_entry")
+    case "$translated_path" in
+      "\\\\wsl.localhost\\"* | "\\\\wsl\$\\"*) ;;
+      *) continue ;;
+    esac
+    sanitized_path="${sanitized_path}${sanitized_path:+:}$path_entry"
+  done
+  PATH=$sanitized_path
+  export PATH
+  unset path_entry remaining_path sanitized_path translated_path
+fi
+unset is_wsl
