@@ -1,4 +1,4 @@
 interface:
   display_name: "Dotfiles Capture"
-  short_description: "Capture live modifier changes into the dotfiles source"
+  short_description: "Capture intentional live dotfile changes into the dotfiles source"
   default_prompt: "Use $dotfiles-capture to capture intentional live dotfile changes into the repository for review."
