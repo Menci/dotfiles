@@ -1,71 +1,42 @@
 {{- /* chezmoi:modify-template */ -}}
-{{- $start := "# >>> chezmoi codex tui >>>" -}}
-{{- $end := "# <<< chezmoi codex tui <<<" -}}
+{{- /*
+  Codex rewrites config.toml itself (trusting a project, adding providers, ...)
+  through a comment-preserving TOML serializer, which relocates standalone
+  comments. We therefore manage the tui status_line purely by key: replace any
+  existing status_line / status_line_use_colors inside [tui] with ours, leaving
+  every other key and table the app owns untouched. No marker comments, so
+  there is nothing for the serializer to drift out of place.
+*/ -}}
 {{- $eol := "\n" -}}
 {{- if contains "\r\n" .chezmoi.stdin -}}
-{{- $eol = "\r\n" -}}
+{{-   $eol = "\r\n" -}}
 {{- end -}}
-{{- $managed := printf "%s\nstatus_line = [\n  \"model-with-reasoning\",\n  \"current-dir\",\n  \"context-used\",\n  \"thread-id\",\n]\nstatus_line_use_colors = true\n%s" $start $end | replace "\n" $eol -}}
+{{- $managed := "status_line = [\n  \"model-with-reasoning\",\n  \"current-dir\",\n  \"context-used\",\n  \"thread-id\",\n]\nstatus_line_use_colors = true" | replace "\n" $eol -}}
 {{- $input := .chezmoi.stdin -}}
 {{- $parsed := fromToml $input -}}
-{{- $starts := regexFindAll `(?m)^# >>> chezmoi codex tui >>>\r?$` $input -1 -}}
-{{- $ends := regexFindAll `(?m)^# <<< chezmoi codex tui <<<\r?$` $input -1 -}}
-{{- if ne (len $starts) (len $ends) -}}
-{{- fail "incomplete chezmoi codex tui marker block" -}}
-{{- end -}}
-{{- if gt (len $starts) 1 -}}
-{{- fail "multiple chezmoi codex tui marker blocks" -}}
-{{- end -}}
 {{- $headers := regexFindAll `(?m)^\[tui\][ \t]*(?:#[^\r\n]*)?\r?$` $input -1 -}}
 {{- if gt (len $headers) 1 -}}
-{{- fail "multiple [tui] tables" -}}
+{{-   fail "multiple [tui] tables" -}}
 {{- end -}}
 {{- if and (eq (len $headers) 0) (hasKey $parsed "tui") -}}
-{{- fail "unsupported TOML declaration for tui; use a [tui] table" -}}
+{{-   fail "unsupported TOML declaration for tui; use a [tui] table" -}}
 {{- end -}}
 {{- $output := "" -}}
-{{- if eq (len $starts) 1 -}}
-  {{- if ne (len $headers) 1 -}}
-  {{- fail "chezmoi codex tui marker block exists outside a [tui] table" -}}
-  {{- end -}}
-  {{- $sectionWithNext := regexFind `(?ms)^\[tui\][ \t]*(?:#[^\r\n]*)?\r?\n.*?(?:^\[|\z)` $input -}}
-  {{- $section := trimSuffix "[" $sectionWithNext -}}
-  {{- if not (contains $start $section) -}}
-  {{- fail "chezmoi codex tui marker block exists outside the [tui] table" -}}
-  {{- end -}}
-  {{- $blocks := regexFindAll `(?ms)^# >>> chezmoi codex tui >>>\r?\n.*?^# <<< chezmoi codex tui <<<(?:\r?\n|\z)` $section -1 -}}
-  {{- if ne (len $blocks) 1 -}}
-  {{- fail "malformed chezmoi codex tui marker block" -}}
-  {{- end -}}
-  {{- $replacement := $managed -}}
-  {{- if hasSuffix $eol (index $blocks 0) -}}
-  {{- $replacement = printf "%s%s" $managed $eol -}}
-  {{- end -}}
-  {{- $output = replace (index $blocks 0) $replacement $input -}}
-{{- else if eq (len $headers) 1 -}}
+{{- if eq (len $headers) 1 -}}
   {{- $sectionWithNext := regexFind `(?ms)^\[tui\][ \t]*(?:#[^\r\n]*)?\r?\n.*?(?:^\[|\z)` $input -}}
   {{- $hasNext := hasSuffix "[" $sectionWithNext -}}
   {{- $section := trimSuffix "[" $sectionWithNext -}}
   {{- $header := regexFind `^\[tui\][ \t]*(?:#[^\r\n]*)?\r?\n` $section -}}
   {{- $body := trimPrefix $header $section -}}
   {{- $statusKeys := regexFindAll `(?m)^[ \t]*(?:status_line|"status_line"|'status_line')[ \t]*=` $body -1 -}}
-  {{- $colorKeys := regexFindAll `(?m)^[ \t]*(?:status_line_use_colors|"status_line_use_colors"|'status_line_use_colors')[ \t]*=` $body -1 -}}
   {{- if gt (len $statusKeys) 1 -}}
   {{- fail "duplicate tui.status_line assignments" -}}
   {{- end -}}
+  {{- $colorKeys := regexFindAll `(?m)^[ \t]*(?:status_line_use_colors|"status_line_use_colors"|'status_line_use_colors')[ \t]*=` $body -1 -}}
   {{- if gt (len $colorKeys) 1 -}}
   {{- fail "duplicate tui.status_line_use_colors assignments" -}}
   {{- end -}}
   {{- if eq (len $statusKeys) 1 -}}
-    {{- $value := get (get $parsed "tui") "status_line" -}}
-    {{- if not (kindIs "slice" $value) -}}
-    {{- fail "tui.status_line must be an array of strings" -}}
-    {{- end -}}
-    {{- range $value -}}
-      {{- if not (kindIs "string" .) -}}
-      {{- fail "tui.status_line must be an array of strings" -}}
-      {{- end -}}
-    {{- end -}}
     {{- $span := regexFind `(?ms)^[ \t]*(?:status_line|"status_line"|'status_line')[ \t]*=[ \t]*\[.*?\][ \t]*(?:#[^\r\n]*)?(?:\r?\n|\z)` $body -}}
     {{- if or (eq $span "") (contains `'''` $span) (contains `"""` $span) -}}
     {{- fail "unsupported multiline tui.status_line assignment" -}}
