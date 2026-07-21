@@ -1,54 +1,79 @@
 ---
 name: review-and-cleanup
-description: Use when the user asks for a combined code-review + cleanup final pass before integration. Typical phrasings — "review + cleanup", "/code-review + /cleanup", "/requesting-code-review + /cleanup", "do review then cleanup", "/requesting-code-review + /cleanup per commit".
+description: Use when the user asks for a combined code-review and cleanup final pass before integration, including per-commit review-and-cleanup. Runs both passes to convergence without expanding beyond issues caused or exposed by the original change.
 ---
 
 # Review and Cleanup
 
-Loop (`superpowers:requesting-code-review` + `cleanup`) over the same scope until a full round makes zero modifications.
+Loop `superpowers:requesting-code-review` and `cleanup` over one frozen causal scope until a full round applies no fixes.
 
-## Scope
+## Freeze the scope
 
-Default: branch diff vs integration base plus uncommitted. If the user asks for per-commit scoping, loop per commit instead.
+Before the first round, resolve the integration base and record the original branch diff. Include uncommitted or untracked work only when the user requested it or repository evidence clearly identifies it as part of the same task; preserve other dirty work.
 
-## Round and convergence
+For per-commit mode, freeze the original commit list and review each original commit patch separately. Treat intentionally included dirty work as one final pseudo-commit. Repairs created by this loop never become new per-commit scopes.
 
-One round = a fresh `superpowers:requesting-code-review` pass, then a `cleanup` pass, both over the same scope.
+Keep three boundaries distinct:
 
-- Review is always a fresh dispatch; never trust a prior round's "already fixed" verdicts.
-- A cleanup edit can re-expose review-fixable issues and vice versa, so convergence is judged on **the whole round**.
-- Keep running rounds until one full round auto-applies zero changes across BOTH stages. A round where one stage was idle but the other modified files is NOT converged — run another round.
+- **Finding roots:** the original diff hunks and the symbols, control flow, contracts, and design decisions they change.
+- **Read context:** any whole file, caller graph, test, documentation, or history needed to understand a root.
+- **Repair closure:** declarations, call sites, imports, tests, docs, config, and protocol consumers that must change to complete an eligible fix.
 
-## Auto-apply rules
+Reading a file does not authorize findings anywhere in it. Editing a repair-closure file does not make that file a new finding root.
 
-**Cleanup stage — apply every finding.** Cleanup is a mechanical / structural pass by construction (redundant comments, agent-voice, stale references, dead code, thin wrappers, single-use helpers, patching traces, optional→required tightening, defensive-fallback removal). Every returned finding is a reasoned defect and gets fixed. Update every call site — public-API renames, cross-package type changes, and behavior-preserving merges are all in scope. Skip a finding only when it is demonstrably wrong (subagent misread the code, the "fix" would break behavior, the evidence chain has a hole); note skips with reasons in the final report. Never skip because a change is small, cosmetic, or "just structural" — structural refactors are the point.
+## Accept only causal findings
 
-**Review stage — auto-apply the code-decidable findings:**
+A finding is eligible only when it:
 
-- Lossless bug fixes (correctness restored)
-- Performance improvements (work reduced)
-- **Structural refactors, abstraction changes, and public-API / protocol shape changes.** These carry the highest signal about design health; treating them as "too big to auto-apply" defeats the point of review. Change size is never a reason to route to decisions. Update every call site as part of the same fix.
+1. was introduced or materially worsened by an original finding root;
+2. concerns unchanged code that became dead, inconsistent, redundant, stale, reachable, or invalid because of a root; or
+3. was introduced by a repair applied during this run.
 
-Route to the decisions list **only** when the finding genuinely lives in decision space that code and this repo's evidence cannot settle:
+Use a counterfactual check: revert the originating root mentally. If the same failure mode, reachability, severity, and materially identical repair remain, the issue is pre-existing baseline debt and is out of scope. Mere presence in a changed file, adjacency to changed lines, or discovery while updating a caller is not causal evidence.
 
-- **UX changes** — user-facing behavior, copy, or interaction that is a product call.
-- **Error-semantics / error-message changes with an external observer** — a published contract, log-parsing consumer, or test in another repo that pins the specific shape or wording. Internal error refactors auto-apply.
-- **Defensive-fallback removal where the caller graph extends beyond this codebase** — published package, cross-service RPC, plugin API — and the "no caller omits" proof cannot be established from the diff. Within-repo fallback removal auto-applies.
+Require each finding to identify its origin:
 
-Uncertainty alone is not decision space. When the fix is a code call the reviewer can settle from in-repo evidence, apply it.
+```json
+{
+  "findings": [{
+    "location": "path:line",
+    "issue": "...",
+    "fix": "concrete change",
+    "scope_origin": "original hunk or prior repair",
+    "causal_evidence": "why that origin created or exposed the issue"
+  }]
+}
+```
 
-On Claude Code, prefer running the cleanup stage through the Workflow tool ("ultracode") — its parallel fan-out across changed files is naturally workflow-shaped, and invoking this skill counts as explicit opt-in.
+Reject findings without concrete causal evidence. Do not fix or report ordinary baseline debt as a skipped finding.
 
-When the user has explicitly pinned something to preserve (e.g. "keep the options struct, more fields will be added"), drop matching suggestions from both stages.
+## Run rounds to convergence
 
-## Commit policy
+One round is a fresh code-review pass followed by a cleanup pass. Give both stages the frozen finding roots, accepted repair hunks, and the scope contract above.
 
-Every applied fix lands as one commit on the feature branch — either a single finding, or a tight same-category batch (e.g. "remove 3 dead branches in handler.ts"; "inline single-use helpers in report.ts"). Never mix unrelated fixes in one commit. Commit message summarizes the finding(s). Both review-originated and cleanup-originated fixes follow this rule.
+- Re-review original roots and prior repair hunks for eligible issues and regressions.
+- Never recompute roots from every file currently changed on the branch.
+- A cleanup edit can expose a review issue and vice versa, so judge convergence across the whole round.
+- Converge only when a full round applies zero eligible fixes. Out-of-scope observations do not prevent convergence.
 
-## Final report
+## Apply eligible fixes
 
-If the round produced no decision-space findings, skip the list entirely — just report what was auto-applied. Do not fabricate items to fill a quota.
+Apply every validated, in-scope cleanup finding. Cleanup fixes preserve intended behavior; correctness or product changes belong to the review stage.
 
-When there are decisions to surface: single combined list, **≤10 items**, in the user's language. Cluster related items; if genuinely more, keep the top 10 by impact and note "+N lower-priority items omitted".
+Auto-apply code-decidable review findings, including lossless bug fixes, performance improvements, structural refactors, abstraction changes, and public API or protocol changes. Update the complete repair closure regardless of change size, but do not clean independent issues found there.
 
-Each item: `path:line` · issue · options · recommendation.
+Route only genuine decision-space findings to the user:
+
+- user-facing behavior, copy, or interaction choices;
+- externally observed error contracts whose intended compatibility cannot be established; or
+- published or cross-service fallback contracts whose callers cannot be proven from available evidence.
+
+Uncertainty alone is not decision space. Drop findings that conflict with a user-pinned decision.
+
+On Claude Code, prefer the Workflow tool (`ultracode`) for cleanup fan-out; invoking this skill is explicit opt-in.
+
+## Commit and report
+
+Commit each applied fix separately, or as a tight same-category batch. Stage only the repair and its necessary closure; never include pre-existing dirty work.
+
+Summarize applied fixes and verification. Omit ordinary out-of-scope observations. When decisions remain, provide one combined list of at most 10 items in the user's language using `path:line` · issue · options · recommendation.
