@@ -7,19 +7,23 @@ fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineKeyHandler -Key 'Alt+Backspace' -Function BackwardDeleteWord
 
+function Resolve-ApplicationPath {
+    param([Parameter(Mandatory)][string]$Name)
+    # PATH may hold several executables of the same name (e.g. both the Windows
+    # OpenSSH scp and Git's scp); take the first, matching bare-name resolution.
+    (Get-Command $Name -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+}
+
 function scp {
-    $command = Get-Command scp -CommandType Application -ErrorAction Stop
-    & $command.Source -O @args
+    & (Resolve-ApplicationPath scp) -O @args
 }
 
 function codex {
-    $command = Get-Command codex -CommandType Application -ErrorAction Stop
-    & $command.Source --sandbox danger-full-access --dangerously-bypass-approvals-and-sandbox @args
+    & (Resolve-ApplicationPath codex) --sandbox danger-full-access --dangerously-bypass-approvals-and-sandbox @args
 }
 
 function claude {
-    $command = Get-Command claude -CommandType Application -ErrorAction Stop
-    & $command.Source --disallowedTools 'EnterPlanMode,AskUserQuestion' --dangerously-skip-permissions @args
+    & (Resolve-ApplicationPath claude) --disallowedTools 'EnterPlanMode,AskUserQuestion' --dangerously-skip-permissions @args
 }
 
 $localProfile = Join-Path $HOME '.config\powershell\local.ps1'
