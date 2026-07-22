@@ -1,0 +1,42 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+# chezmoi manages these paths as symlinks into ~/.agents. When one already
+# exists as a reparse point that Go does not recognise as a native symlink,
+# os.Lstat reports os.ModeIrregular and chezmoi aborts the whole apply with
+# "unsupported file type": it can neither read nor replace the entry. This
+# happens when the link was created outside native Windows — e.g. a WSL
+# symlink (IO_REPARSE_TAG_LX_SYMLINK) over /mnt/c, which carries an absolute
+# target and a reparse tag Go maps to ModeIrregular rather than ModeSymlink
+# (Go 1.23 winsymlink=1). Drop such stale links here so the apply that follows
+# recreates the intended native symlink; deleting a reparse point never
+# touches the target's contents.
+$links = @(
+    @{ Path = Join-Path $HOME '.claude\skills';   Target = '..\.agents\skills' },
+    @{ Path = Join-Path $HOME '.claude\CLAUDE.md'; Target = '..\.agents\AGENTS.md' },
+    @{ Path = Join-Path $HOME '.codex\AGENTS.md';  Target = '..\.agents\AGENTS.md' }
+)
+
+foreach ($link in $links) {
+    try {
+        $attributes = [IO.File]::GetAttributes($link.Path)
+    } catch {
+        continue  # Absent: the upcoming apply creates it.
+    }
+
+    if (($attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+        continue  # A plain file or directory is left for chezmoi to reconcile.
+    }
+
+    $item = Get-Item -LiteralPath $link.Path -Force -ErrorAction SilentlyContinue
+    if ($null -ne $item -and $item.LinkType -eq 'SymbolicLink' -and [string]$item.Target -eq $link.Target) {
+        continue  # Already the intended native symlink.
+    }
+
+    if (($attributes -band [IO.FileAttributes]::Directory) -ne 0) {
+        [IO.Directory]::Delete($link.Path, $false)
+    } else {
+        [IO.File]::Delete($link.Path)
+    }
+}
+{{ end -}}
