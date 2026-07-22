@@ -1,7 +1,7 @@
 {{ if eq .chezmoi.os "windows" -}}
 $ErrorActionPreference = 'Stop'
 
-$claude = Get-Command claude.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+$claude = Get-Command claude -CommandType Application -ErrorAction Stop | Select-Object -First 1
 $operations = @(
     @('plugin', 'marketplace', 'add', 'jarrodwatts/claude-hud', '--scope', 'user'),
     @('plugin', 'marketplace', 'update', 'claude-hud'),
