@@ -1,0 +1,32 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+
+# PowerShell derives $PROFILE from the "Personal" (MyDocuments) known folder,
+# which OneDrive's Known Folder Move relocates to "<OneDrive>\Documents". A
+# static source entry can only target the literal ~\Documents path and would
+# miss that redirection, leaving the shell with no profile to load. Resolve the
+# same known folder PowerShell itself uses and write the stub where each host
+# actually looks. Windows PowerShell 5.1 and PowerShell 7 share the MyDocuments
+# base and differ only in the leaf directory.
+$documents = [Environment]::GetFolderPath('MyDocuments')
+if ([string]::IsNullOrEmpty($documents)) {
+    throw 'Could not resolve the Documents folder: the MyDocuments known folder is empty.'
+}
+
+$stub = @'
+. (Join-Path $HOME '.config\powershell\profile.ps1')
+'@
+
+$profiles = @(
+    (Join-Path $documents 'PowerShell\Microsoft.PowerShell_profile.ps1'),
+    (Join-Path $documents 'WindowsPowerShell\Microsoft.PowerShell_profile.ps1')
+)
+
+foreach ($profilePath in $profiles) {
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $profilePath) | Out-Null
+    if (-not (Test-Path -LiteralPath $profilePath) -or
+        (Get-Content -Raw -LiteralPath $profilePath).Trim() -ne $stub.Trim()) {
+        Set-Content -LiteralPath $profilePath -Value $stub -Encoding utf8
+    }
+}
+{{ end -}}
