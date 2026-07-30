@@ -1,9 +1,17 @@
 ---
 name: using-codex-cli
-description: Use when an agent needs to call the `codex` CLI from another runtime, delegate work to Codex non-interactively, resume a Codex CLI session, capture Codex output, or coordinate cross-runtime agent handoffs.
+description: Use ONLY when the user explicitly asks for the `codex` CLI — calling it from another runtime, delegating work to Codex non-interactively, resuming a Codex CLI session, or capturing Codex output. Never a substitute for a subagent.
 ---
 
 # Using Codex CLI
+
+## When This Skill Applies
+
+Only when the user explicitly asks for the Codex CLI (`codex`, "Codex CLI", "delegate to Codex", or an equivalent explicit request). Without that explicit request, do not invoke the `codex` binary at all.
+
+The Codex CLI is not a subagent mechanism. Never use it to parallelize work, to run research, or to stand in for the Agent/Task tool — use real subagents for that, no matter how convenient a CLI call looks.
+
+## Invocation
 
 Use `command codex exec` for non-interactive delegation. Preserve the caller's environment defaults unless the user explicitly asks for different model/configuration.
 

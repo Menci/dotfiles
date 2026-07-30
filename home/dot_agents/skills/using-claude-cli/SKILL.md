@@ -1,9 +1,17 @@
 ---
 name: using-claude-cli
-description: Use when an agent needs to call the `claude` CLI from another runtime, delegate work to Claude Code non-interactively, resume a Claude session, capture Claude output, or coordinate cross-runtime agent handoffs.
+description: Use ONLY when the user explicitly asks for the `claude` CLI — calling it from another runtime, delegating work to Claude Code non-interactively, resuming a Claude session, or capturing Claude output. Never a substitute for a subagent.
 ---
 
 # Using Claude CLI
+
+## When This Skill Applies
+
+Only when the user explicitly asks for the Claude CLI (`claude`, "Claude CLI", "delegate to Claude Code", or an equivalent explicit request). Without that explicit request, do not invoke the `claude` binary at all.
+
+The Claude CLI is not a subagent mechanism. Never use it to parallelize work, to run research, or to stand in for the Agent/Task tool — use real subagents for that, no matter how convenient a CLI call looks.
+
+## Invocation
 
 Use `command claude -p` for non-interactive delegation. Keep model, tools, settings, and environment-derived defaults unchanged unless the user explicitly asks otherwise.
 
