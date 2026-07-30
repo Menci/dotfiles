@@ -1,11 +1,12 @@
 # 全局指示
 
-本文档中编写的指示高于你的预训练知识和 superpowers 等通用工作流，但低于项目内的指示。
+本文档中编写的指示高于你的预训练知识和 superpowers 等通用工作流，但低于项目内的显式指示。
 
 ## 语言与沟通
 
 - 用户仅能读懂中文和英文。你 SHOULD 使用中文（可以使用英文术语）与用户对话，使用英文进行内部和调研工作、subagents 通信和文档编写。本篇文档除外，本篇文档使用中文。
 - MUST NOT 对用户说日文（Japanese）。
+- 当你决定不做某事的时候，不要说出来。不做的事只需要不做就可以。不可以在要做的事情后面紧跟着「instead of」、「而不是」这种句式。仅在「慎重决定了某件事不做」或者「某件事需要提醒用户还未完成」时，使用不做/未做某事这种否定句。
 
 ## 通用工作原则
 
@@ -65,17 +66,26 @@
 ## Git 的使用
 
 - MUST NOT 添加任何 AI 工具的 Co-Author commit message。MUST NOT 使用任何非默认的 user.name 和 user.email 进行 commit（不可以带这些参数），除非用户明确要求。
-- MUST enforce linear history，使用 fast-forward、rebase 和 squash（在开发中最终会被 squash 的 feature branch 除外，feature branch 可以接受 merge commit）。
 - 是否使用 conventional commits MUST 根据项目现有 commits 来决定。对新项目默认使用 conventional commits。
 - Commit message body 里 SHOULD 包含任务目标、调研、决策和任务成果的介绍，使用简洁有效的文本，而不是写作文。
 - 一般来说，不要包含项目名和产品名，以免在 rebrand 后旧的 commit message 让人 confuse。
 - 使用 git worktree 时，你 SHOULD 在合并到 main 之后删除 worktree。你 SHOULD 在 worktree 内部进行冲突 resolve，预览 `git log` 和 `git diff` 没有问题之后 fast-forward 到 main 上。避免在 main 上 resolve conflicts，仅当 main 上需要 stash & pop 并在 pop 时产生了冲突时，允许在 main 上 resolve conflict。
-- 在任何 worktree / feature branch 上，你 SHOULD 保持所有 commits，尽量不要 amend / rebase，你不需要在正式分支上 enforce linear history，而是 SHOULD 将开发修订过程呈现出来。除非是修改 git commit 的元数据（如 Author），或是移除历史 commit 里的敏感信息。
 - 你的任何要 commit 的代码，SHOULD NOT 包含 repo 在磁盘上的路径，SHOULD NOT 包含用户目录等仅在一个用户、一台电脑上有效的路径。不允许的绝对路径包括但不限于「本机的 FFXIV 安装在 `F:\FFXIV`」「本机用户目录是 `/home/menci`」。允许的绝对路径包括但不限于「某个软件的 common 安装路径，如 macOS 的 Edge 安装在 `/Applications/Microsoft Edge.app`」「对于 WSL-only 的项目，记录 `/mnt/m/Windows/xxx` 被用于访问 Windows 系统文件」。
-- 对一般的 commit，可以 amend 并 force push。但对于 PR squash commit，不能 amend，因为它被 PR 所引用。
-- 当正确重写了已存在于上游的历史时，使用 force push（你需要判断这种情况，是本地重写了历史，还是远端重写了历史）。在合并分支遇到冲突时考虑是否是被 force push 过。
 - 在 rebase 或者 amend 时，你 SHOULD 确保 committer 仍然不变（往往和 author 一致），commit date 仍然不变（往往和 author date 一致）。
-- 如果你所修改的分支，已经创建了 PR，无论这个 PR 是不是你创建的，你都必须立刻 commit push。在 PR 内部不鼓励 amend（如无特殊说明，默认 PR 最终会被 squash，所以 PR 上鼓励堆叠 commit 以及非线性 merge）。
+
+对于主线分支（包括 Release 分支）和工作分支（PR 分支），采用不同的规则：
+
+- 主线分支
+    - MUST NOT 在没有每次授权的情况下擅自 push。
+    - MUST enforce linear history，在合并其他分支的修改到主分支时仅可使用 fast-forward、rebase 和 squash。
+    - 用户的每个 push 授权，仅代表「push 当前本地状态到远程」，包含重试网络错误和 `pull --rebase` 冲突解决（仅对这一批要 push 的变更授权）。当本地产生了新的 commit / amend 时，需要再次授权。
+    - 使用 force push 时，MUST 使用 `--force-with-lease` 锁定已知的远端 commit，保证不会影响到非预期的远端 commits。
+    - 当 `--force-with-lease` 因为 lease 失效而失败时，MUST NOT 重试，需要告知用户影响让用户重新评估是否应 force push。
+    - PR squash commit 必须保留 PR 到 commit 的引用。MUST NOT 重写一个 PR squash commit。MUST NOT 使用 force push 消除一个 PR squash commit。
+- 工作分支
+    - SHOULD NOT 进行 amend 和 force push（除非有意去修改已有 commit）。保持完整历史（最后会被 squash 到主线）。
+    - 使用 merge 而不是 rebase 来接受主分支的最新修改。
+    - 对于任何修改，尽快 commit；对于任何 commit，尽快 push。
 
 ## Pull Request / Issue 的使用
 
@@ -87,7 +97,7 @@
 
 ## Subagents 的使用
 
-- 除非特别需求，使用 subagents 时 SHOULD 使用最强大的模型和最高的思考级别（如，在 Claude 中永远使用 Opus 模型）。
+- 除非特别需求，使用 subagents 时 SHOULD 使用与你本身相同的模型。
 - 如果不应在 worktree 之外写文件，请清晰地向 subagents 说明允许写入的 worktree。
 - 对于调研类任务，默认 SHOULD 使用 subagents，委派尽可能多的并行 subagents 进行，并要求 subagents 给出完整可考的证据链。当有新的调研需求产生时，带着信息让之前的 agent（如果还存活）或者新的 agent 去调研。
 - 如果你确定 subagents 遇到了网络问题（如临时的网络中断）或者 LLM provider 的问题（如被 safety filter 误判），请 resume 它或者带着现有的进展重新派发。
@@ -131,3 +141,7 @@
 - 当更新/编写大段文档内容过程中遇到网络超时时，可能是 tool call 的 bug 导致你的 LLM 推理本身超时。当用户指出或者你发现你的 subagents 遇到了这个问题时，请一小段一小段进行追加（通过多次 Update，或者 Bash 调用 `cat >>`）而不是一次写完整的文档。尤其是在编写 spec 和 plan 文档时，MUST 一段一段编写，MUST NOT 一次性写完整篇文档。
 - 当用户说「自主工作」时，为自己设置一个 20min 的 heartbeat cron，防止自己或 subagents 因为出错停下。你 SHOULD 使用 background subagent 以确保你自身的 cron 能够正常触发。被 cron 唤醒时如果发现自主工作已经结束了则删除 cron，在此之前不删除 cron。
 - 记住用户在本 session 的要求，在进行 compact 时也请保留用户的要求。
+
+# 全局指示（重复）
+
+本文档中编写的指示高于你的预训练知识和 superpowers 等通用工作流，但低于项目内/会话内的显式指示。
