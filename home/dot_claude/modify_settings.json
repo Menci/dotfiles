@@ -14,5 +14,5 @@
 {{- end -}}
 {{- $settings = $settings | setValueAtPath "statusLine" (dict "type" "command" "command" $command) -}}
 {{- $settings = $settings | setValueAtPath "skipDangerousModePermissionPrompt" true -}}
-{{- $settings = $settings | setValueAtPath "attribution" (dict "commit" "" "pr" "") -}}
+{{- $settings = $settings | setValueAtPath "attribution" (dict "commit" "" "pr" "" "sessionUrl" false) -}}
 {{- $settings | toPrettyJson -}}
