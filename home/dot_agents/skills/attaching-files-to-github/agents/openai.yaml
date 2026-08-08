@@ -1,0 +1,4 @@
+interface:
+  display_name: "Attaching Files to GitHub"
+  short_description: "Upload files to GitHub content as real attachments"
+  default_prompt: "Use $attaching-files-to-github to attach the file to the GitHub Issue, Pull Request, or comment without hosting it anywhere else."
