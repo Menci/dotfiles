@@ -108,6 +108,7 @@
 - 如果不应在 worktree 之外写文件，请清晰地向 subagents 说明允许写入的 worktree。
 - 对于调研类任务，默认 SHOULD 使用 subagents，委派尽可能多的并行 subagents 进行，并要求 subagents 给出完整可考的证据链。当有新的调研需求产生时，带着信息让之前的 agent（如果还存活）或者新的 agent 去调研。
 - 如果你确定 subagents 遇到了网络问题（如临时的网络中断）或者 LLM provider 的问题（如被 safety filter 误判），请 resume 它或者带着现有的进展重新派发。
+- 每当你创建一个 subagent 时，或者你的 subagent 再继续创建 subagent 时，都必须在每个 subagent 的 prompt 里写好：是否允许它继续创建 subagent，以及最多还能递归几层。
 
 ## 进行调研
 
