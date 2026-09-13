@@ -28,7 +28,8 @@ shared with WSL.
 ## Agent configuration
 
 Shared skills live in `~/.agents/skills`; Claude uses the `~/.claude/skills`
-symlink.
+symlink. Repository-managed skills include direct file processing for
+Synthesizer V 1 and 2.
 
 `home/.chezmoidata/agent-preferences.json` contains portable Claude and Codex
 preferences: interface behavior, reasoning effort, execution preferences,
