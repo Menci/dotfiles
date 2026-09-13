@@ -6,6 +6,15 @@
 {{- fail "Claude settings must be a JSON object" -}}
 {{- end -}}
 {{- end -}}
+{{- range $key, $value := .agentPreferences.claude -}}
+{{- if or (eq $key "env") (eq $key "enabledPlugins") (eq $key "extraKnownMarketplaces") -}}
+{{- range $nestedKey, $nestedValue := $value -}}
+{{- $settings = setValueAtPath (list $key $nestedKey) $nestedValue $settings -}}
+{{- end -}}
+{{- else -}}
+{{- $settings = setValueAtPath (list $key) $value $settings -}}
+{{- end -}}
+{{- end -}}
 {{- $command := `node "$HOME/.claude/plugins/claude-hud/statusline.mjs"` -}}
 {{- if eq .chezmoi.os "windows" -}}
 {{- $cmd := joinPath (env "SystemRoot") "System32" "cmd.exe" -}}

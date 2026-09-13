@@ -1,68 +1,88 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- /*
-  Codex rewrites config.toml itself (trusting a project, adding providers, ...)
-  through a comment-preserving TOML serializer, which relocates standalone
-  comments. We therefore manage the tui status_line purely by key: replace any
-  existing status_line / status_line_use_colors inside [tui] with ours, leaving
-  every other key and table the app owns untouched. No marker comments, so
-  there is nothing for the serializer to drift out of place.
+  Codex owns provider configuration, project trust, and generated state in this
+  file. Replace only captured preference assignments so their surrounding
+  comments, tables, and machine-local values survive application rewrites.
 */ -}}
 {{- $eol := "\n" -}}
 {{- if contains "\r\n" .chezmoi.stdin -}}
-{{-   $eol = "\r\n" -}}
+{{- $eol = "\r\n" -}}
 {{- end -}}
-{{- $managed := "status_line = [\n  \"model-with-reasoning\",\n  \"current-dir\",\n  \"context-used\",\n  \"thread-id\",\n]\nstatus_line_use_colors = true" | replace "\n" $eol -}}
-{{- $input := .chezmoi.stdin -}}
-{{- $parsed := fromToml $input -}}
-{{- $headers := regexFindAll `(?m)^\[tui\][ \t]*(?:#[^\r\n]*)?\r?$` $input -1 -}}
-{{- if gt (len $headers) 1 -}}
-{{-   fail "multiple [tui] tables" -}}
+{{- $output := .chezmoi.stdin -}}
+{{- range $spec := .agentPreferences.codex -}}
+{{- $parsed := fromToml $output -}}
+{{- $table := $parsed -}}
+{{- range $part := $spec.path -}}
+{{- if hasKey $table $part -}}
+{{- $table = index $table $part -}}
+{{- if not (kindIs "map" $table) -}}
+{{- fail (printf "%s is not a TOML table" $spec.header) -}}
 {{- end -}}
-{{- if and (eq (len $headers) 0) (hasKey $parsed "tui") -}}
-{{-   fail "unsupported TOML declaration for tui; use a [tui] table" -}}
-{{- end -}}
-{{- $output := "" -}}
-{{- if eq (len $headers) 1 -}}
-  {{- $sectionWithNext := regexFind `(?ms)^\[tui\][ \t]*(?:#[^\r\n]*)?\r?\n.*?(?:^\[|\z)` $input -}}
-  {{- $hasNext := hasSuffix "[" $sectionWithNext -}}
-  {{- $section := trimSuffix "[" $sectionWithNext -}}
-  {{- $header := regexFind `^\[tui\][ \t]*(?:#[^\r\n]*)?\r?\n` $section -}}
-  {{- $body := trimPrefix $header $section -}}
-  {{- $statusKeys := regexFindAll `(?m)^[ \t]*(?:status_line|"status_line"|'status_line')[ \t]*=` $body -1 -}}
-  {{- if gt (len $statusKeys) 1 -}}
-  {{- fail "duplicate tui.status_line assignments" -}}
-  {{- end -}}
-  {{- $colorKeys := regexFindAll `(?m)^[ \t]*(?:status_line_use_colors|"status_line_use_colors"|'status_line_use_colors')[ \t]*=` $body -1 -}}
-  {{- if gt (len $colorKeys) 1 -}}
-  {{- fail "duplicate tui.status_line_use_colors assignments" -}}
-  {{- end -}}
-  {{- if eq (len $statusKeys) 1 -}}
-    {{- $span := regexFind `(?ms)^[ \t]*(?:status_line|"status_line"|'status_line')[ \t]*=[ \t]*\[.*?\][ \t]*(?:#[^\r\n]*)?(?:\r?\n|\z)` $body -}}
-    {{- if or (eq $span "") (contains `'''` $span) (contains `"""` $span) -}}
-    {{- fail "unsupported multiline tui.status_line assignment" -}}
-    {{- end -}}
-    {{- $body = replace $span "" $body -}}
-  {{- end -}}
-  {{- if eq (len $colorKeys) 1 -}}
-    {{- $span := regexFind `(?m)^[ \t]*(?:status_line_use_colors|"status_line_use_colors"|'status_line_use_colors')[ \t]*=[ \t]*(?:true|false)[ \t]*(?:#[^\r\n]*)?(?:\r?\n|$)` $body -}}
-    {{- if eq $span "" -}}
-    {{- fail "unsupported tui.status_line_use_colors assignment" -}}
-    {{- end -}}
-    {{- $body = replace $span "" $body -}}
-  {{- end -}}
-  {{- $newSection := printf "%s%s%s%s" $header $managed $eol $body -}}
-  {{- if $hasNext -}}
-  {{- $newSection = printf "%s[" $newSection -}}
-  {{- end -}}
-  {{- $output = replace $sectionWithNext $newSection $input -}}
 {{- else -}}
-  {{- if eq $input "" -}}
-  {{- $output = printf "[tui]%s%s%s" $eol $managed $eol -}}
-  {{- else if hasSuffix $eol $input -}}
-  {{- $output = printf "%s%s[tui]%s%s%s" $input $eol $eol $managed $eol -}}
-  {{- else -}}
-  {{- $output = printf "%s%s%s[tui]%s%s%s" $input $eol $eol $eol $managed $eol -}}
-  {{- end -}}
+{{- $table = dict -}}
+{{- end -}}
+{{- end -}}
+{{- $section := "" -}}
+{{- $prefix := "" -}}
+{{- $exists := eq $spec.header "" -}}
+{{- if $exists -}}
+{{- $section = regexFind `(?s)\A.*?(?:\n\[|\z)` $output -}}
+{{- if hasPrefix "[" $output -}}
+{{- $section = "[" -}}
+{{- end -}}
+{{- else -}}
+{{- $headerPattern := printf `(?m)^%s[ \t]*(?:#[^\r\n]*)?\r?$` (regexQuoteMeta $spec.header) -}}
+{{- $headers := regexFindAll $headerPattern $output -1 -}}
+{{- if gt (len $headers) 1 -}}
+{{- fail (printf "multiple %s tables" $spec.header) -}}
+{{- end -}}
+{{- $exists = eq (len $headers) 1 -}}
+{{- if $exists -}}
+{{- $section = regexFind (printf `(?ms)^%s[ \t]*(?:#[^\r\n]*)?(?:\r?\n|\z).*?(?:^\[|\z)` (regexQuoteMeta $spec.header)) $output -}}
+{{- $prefix = regexFind `\A[^\r\n]*(?:\r?\n|\z)` $section -}}
+{{- else if gt (len $table) 0 -}}
+{{- fail (printf "unsupported TOML declaration for %s" $spec.header) -}}
+{{- end -}}
+{{- end -}}
+{{- $hasNext := hasSuffix "[" $section -}}
+{{- $body := trimPrefix $prefix (trimSuffix "[" $section) -}}
+{{- range $key, $value := $spec.values -}}
+{{- if or (not (hasKey $table $key)) (ne (toJson (index $table $key)) (toJson $value)) -}}
+{{- $keyPattern := printf `(?:%s|"%s"|'%s')` (regexQuoteMeta $key) (regexQuoteMeta $key) (regexQuoteMeta $key) -}}
+{{- $assignment := (dict $key $value | toToml | trimSuffix "\n" | replace "\n" $eol) -}}
+{{- if hasKey $table $key -}}
+{{- $span := regexFind (printf `(?ms)^[ \t]*%s[ \t]*=[ \t]*(?:\[[^\]]*\][ \t]*(?:#[^\r\n]*)?|[^\r\n]*)(?:\r?\n|\z)` $keyPattern) $body -}}
+{{- if or (eq $span "") (contains `'''` $span) (contains `"""` $span) -}}
+{{- fail (printf "unsupported assignment for %s %s" $spec.header $key) -}}
+{{- end -}}
+{{- $body = replace $span (printf "%s%s" $assignment $eol) $body -}}
+{{- else -}}
+{{- if and (ne $body "") (not (hasSuffix $eol $body)) -}}
+{{- $body = printf "%s%s" $body $eol -}}
+{{- end -}}
+{{- $body = printf "%s%s%s" $body $assignment $eol -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if $exists -}}
+{{- if and (ne $prefix "") (ne $body "") (not (hasSuffix $eol $prefix)) -}}
+{{- $prefix = printf "%s%s" $prefix $eol -}}
+{{- end -}}
+{{- $replacement := printf "%s%s" $prefix $body -}}
+{{- if $hasNext -}}
+{{- $replacement = printf "%s[" $replacement -}}
+{{- end -}}
+{{- if eq $spec.header "" -}}
+{{- $output = printf "%s%s" $replacement (trimPrefix $section $output) -}}
+{{- else -}}
+{{- $output = replace $section $replacement $output -}}
+{{- end -}}
+{{- else -}}
+{{- if and (ne $output "") (not (hasSuffix $eol $output)) -}}
+{{- $output = printf "%s%s" $output $eol -}}
+{{- end -}}
+{{- $output = printf "%s%s%s%s%s" $output $eol $spec.header $eol $body -}}
+{{- end -}}
 {{- end -}}
 {{- $_ := fromToml $output -}}
 {{- $output -}}

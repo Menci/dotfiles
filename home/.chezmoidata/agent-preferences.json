@@ -1,0 +1,208 @@
+{
+  "agentPreferences": {
+    "claude": {
+      "cleanupPeriodDays": 99999,
+      "disableAgentView": true,
+      "enabledPlugins": {
+        "claude-hud@claude-hud": true,
+        "deno-skills@denoland-skills": true,
+        "frontend-design@claude-plugins-official": true,
+        "modern-go-guidelines@goland-claude-marketplace": true,
+        "superpowers@claude-plugins-official": true
+      },
+      "extraKnownMarketplaces": {
+        "anthropic-agent-skills": {
+          "source": {
+            "source": "github",
+            "repo": "anthropics/skills"
+          }
+        },
+        "claude-hud": {
+          "source": {
+            "source": "github",
+            "repo": "jarrodwatts/claude-hud"
+          }
+        },
+        "denoland-skills": {
+          "source": {
+            "source": "github",
+            "repo": "denoland/skills"
+          }
+        },
+        "goland-claude-marketplace": {
+          "source": {
+            "source": "github",
+            "repo": "JetBrains/go-modern-guidelines"
+          }
+        },
+        "superpowers-marketplace": {
+          "source": {
+            "source": "github",
+            "repo": "obra/superpowers-marketplace"
+          }
+        }
+      },
+      "effortLevel": "xhigh",
+      "autoMemoryEnabled": false,
+      "env": {
+        "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "256000",
+        "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION": "999999",
+        "CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION": "999999"
+      }
+    },
+    "codex": [
+      {
+        "header": "",
+        "path": [],
+        "values": {
+          "model_reasoning_effort": "medium",
+          "personality": "pragmatic",
+          "approval_policy": "never",
+          "sandbox_mode": "danger-full-access",
+          "suppress_unstable_features_warning": true
+        }
+      },
+      {
+        "header": "[tui]",
+        "path": [
+          "tui"
+        ],
+        "values": {
+          "status_line": [
+            "model-with-reasoning",
+            "current-dir",
+            "context-used",
+            "thread-id"
+          ],
+          "status_line_use_colors": true,
+          "session_picker_view": "dense"
+        }
+      },
+      {
+        "header": "[desktop]",
+        "path": [
+          "desktop"
+        ],
+        "values": {
+          "ambient-suggestions-enabled": true,
+          "preventSleepWhileRunning": true,
+          "keepRemoteControlAwakeWhilePluggedIn": true,
+          "git-always-force-push": true,
+          "git-pull-request-merge-method": "squash",
+          "conversationDetailMode": "STEPS_COMMANDS",
+          "followUpQueueMode": "queue",
+          "enabled-reasoning-efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "ultra",
+            "max"
+          ],
+          "dock-icon-preference": "codex-system"
+        }
+      },
+      {
+        "header": "[features]",
+        "path": [
+          "features"
+        ],
+        "values": {
+          "apps": false,
+          "js_repl": false,
+          "standalone_web_search": true
+        }
+      },
+      {
+        "header": "[plugins.\"superpowers@openai-curated\"]",
+        "path": [
+          "plugins",
+          "superpowers@openai-curated"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"documents@openai-primary-runtime\"]",
+        "path": [
+          "plugins",
+          "documents@openai-primary-runtime"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"spreadsheets@openai-primary-runtime\"]",
+        "path": [
+          "plugins",
+          "spreadsheets@openai-primary-runtime"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"presentations@openai-primary-runtime\"]",
+        "path": [
+          "plugins",
+          "presentations@openai-primary-runtime"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"pdf@openai-primary-runtime\"]",
+        "path": [
+          "plugins",
+          "pdf@openai-primary-runtime"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"template-creator@openai-primary-runtime\"]",
+        "path": [
+          "plugins",
+          "template-creator@openai-primary-runtime"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"computer-use@openai-bundled\"]",
+        "path": [
+          "plugins",
+          "computer-use@openai-bundled"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"visualize@openai-bundled\"]",
+        "path": [
+          "plugins",
+          "visualize@openai-bundled"
+        ],
+        "values": {
+          "enabled": true
+        }
+      },
+      {
+        "header": "[plugins.\"browser@openai-bundled\"]",
+        "path": [
+          "plugins",
+          "browser@openai-bundled"
+        ],
+        "values": {
+          "enabled": true
+        }
+      }
+    ]
+  }
+}
