@@ -16,9 +16,27 @@ These format details cover inspected SV1 v153 and SV2 v196 files. Version number
 - Group moves can change global timing while leaving every note's local onset and duration untouched. Compare both coordinate systems before applying a correction. Saving can discard unused library groups, so persistent helper-note snapshots may need storage outside the SVP.
 - `lyrics` and `phonemes` are separate: an empty `phonemes` string requests generated pronunciation; it does not mean silence. `attributes.phonemes[]` stores per-phone controls and is not the pronunciation string. Empty controls do not reveal automatically generated phone boundaries.
 
+## Manual pitch curves
+
+A group's manual pitch line lives in `group.pitchControls[]`, a sibling of `notes`. Each entry is a segment:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Segment identifier |
+| `pos` | Segment start in blicks, in the group's own coordinates |
+| `pitch` | Base pitch for the segment |
+| `points` | **Flat** array `[x0, y0, x1, y1, ...]` |
+
+A point sits at `pos + x` in group coordinates — add `reference.blickOffset` for the global timeline — and at pitch `pitch + y`, plus `reference.pitchOffset` for the effective MIDI pitch. `x` is non-decreasing within a segment.
+
+- The line is stored in **absolute pitch**, not as a note-relative offset: a point's pitch does not depend on which note covers it. This is the opposite of ACE Studio's `pitchDelta`.
+- Segments can be far apart with rests between them. A tick that no segment covers simply has no curve value — a normal state, not a parse failure — and nothing should be interpolated across the gap when reporting what the project holds.
+- One segment can be constant across notes of very different pitch: an inspected project held a single value (63.939129) over notes spanning MIDI 60-72. A curve sample therefore does not identify the note's pitch, and a line that looks flat in the editor is flat in absolute terms.
+- Control points define a piecewise-linear curve, and point spacing is dense (tens of ticks), so linear interpolation is adequate for tick-level work.
+
 ## Phoneme edits and conversion
 
-Read [phoneme timing](references/phoneme-timing.md) for SV2 `leftOffset`, language-specific phone encoding, adjoining syllables, and existing automatic timing caches. **`leftOffset` is seconds relative to the note onset**, not an additional displacement from the automatic boundary.
+Read [phoneme timing](references/phoneme-timing.md) for SV2 `leftOffset`, language-specific phone encoding, adjoining syllables, existing automatic timing caches, and transferring one track's timing onto another. **`leftOffset` is seconds relative to the note onset**, not an additional displacement from the automatic boundary.
 
 Read [SV1 serialization](references/sv1.md) when generating v153 files or converting SV2 phoneme timing into note boundaries. A version-number change alone does not convert the schema. SV1 explicit-phone continuation fragments require blank lyrics in the validated conversion; `lyrics: "-"` with an explicit `phonemes` value produced silence.
 

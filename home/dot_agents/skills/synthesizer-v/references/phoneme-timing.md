@@ -21,6 +21,21 @@ codaStartRelativeToCurrentNote = nextInitialStartGlobal - currentNoteStartGlobal
 
 This formula applies to adjoining syllables; real rests and detached endings require their actual boundaries. Moving whole note onsets to encode small syllable delays can introduce short rests and change consonant allocation. Writing the nucleus offset can express that delay while preserving adjoining notes.
 
+## Transferring timing between tracks
+
+Time-aligned tracks often need one's timing and pronunciation copied onto another. Nothing in the file records the correspondence: group and reference UUIDs are per-lane and a note carries no back-reference, so the pairing is positional — resolved from where notes sound, with lane names indicating intent at best.
+
+Two things hold generally; neither has a fixed rule.
+
+- **The unit that moves is the source's syllable, not its note.** One syllable is commonly spread over several notes joined by `-` continuation notes. Group the source's notes into syllables before comparing spans. Measuring a destination note against the single source note under its onset invents a mismatch on every split syllable, and makes a short note look like it should be a longer one.
+- **The destination's own division is not authoritative and is expected to be overridden.** The same music is cut into different numbers of notes between projects and between programs: one inspected part needed 18 cuts against one program's division of its source material and 25 against the other's, for the same 217 destination notes and the same 174 covered. Derive the destination's division from the source's structure rather than preserving what is already there.
+
+The remaining cases follow from onset and context rather than from a rule: a destination note may enter late inside a syllable, cover only part of one, or cover two.
+
+Division is the only structural change. Everything not being transferred — pitch, detune, accent, takes, and the destination note's own attributes — is carried onto each resulting piece unchanged, and a piece cut at its origin's onset keeps that origin's UUID. A destination note the source does not sound under keeps what it had.
+
+Pronunciation copies verbatim: `leftOffset` is already seconds relative to the note onset, so a piece shorter than its source keeps the source's real consonant duration rather than a recomputed one. Deriving offsets from a ratio between the two notes is wrong.
+
 ## Phone symbols and language scope
 
 - Store explicit pronunciation in `note.phonemes`, separated by spaces. Per-note language override belongs in `note.attributes.languageOverride` and `phonesetOverride`, not at note top level or inside each entry of `attributes.phonemes[]`.
