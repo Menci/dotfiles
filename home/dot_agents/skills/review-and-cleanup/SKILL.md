@@ -49,7 +49,7 @@ Reject findings without concrete causal evidence. Do not fix or report ordinary 
 
 ## Run rounds to convergence
 
-One round is a fresh code-review pass followed by a cleanup pass. Give both stages the frozen finding roots, accepted repair hunks, and the scope contract above.
+One round is a fresh code-review pass followed by a cleanup pass. Give both stages the frozen finding roots, accepted repair hunks, and the scope contract above. Follow `cleanup` for separate comment, structure, and defensive-design assessments, batching each category by file or cohesive portion of a large file while retaining per-unit coverage.
 
 - Re-review original roots and prior repair hunks for eligible issues and regressions.
 - Never recompute roots from every file currently changed on the branch.
@@ -58,7 +58,7 @@ One round is a fresh code-review pass followed by a cleanup pass. Give both stag
 
 ## Apply eligible fixes
 
-Apply every validated, in-scope cleanup finding. Cleanup fixes preserve intended behavior; correctness or product changes belong to the review stage.
+Apply every validated, in-scope cleanup finding. Cleanup fixes preserve intended behavior and must not increase complexity across their repair closure. Redesign any more-complex proposal into a simpler or equally simple solution; correctness or product requirements needing additional complexity belong to the review stage and its authorization rules.
 
 Auto-apply code-decidable review findings, including lossless bug fixes, performance improvements, structural refactors, abstraction changes, and public API or protocol changes. Update the complete repair closure regardless of change size, but do not clean independent issues found there.
 

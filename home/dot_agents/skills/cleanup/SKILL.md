@@ -1,224 +1,125 @@
 ---
 name: cleanup
-description: Use when finishing a feature branch and wanting a final-state cleanup pass. Inventories every causal comment, function or structure, and defensive fallback as an atomic review unit; assigns one globally informed subagent per unit unless the user explicitly requests a different review granularity; fixes every validated issue caused or exposed by the change; and proves zero-finding convergence without touching unrelated baseline debt.
+description: Clean the final design of a change through separate comment, structure, and defensive-design reviews. Batch reviewers by file or cohesive portion of a large file, retain per-unit evidence and causal scope, and converge without increasing complexity or touching unrelated baseline debt.
 ---
 
 # Cleanup
 
-Clean the final design introduced by a change. The default and essential mechanism is **one atomic review unit per subagent**: one comment, one changed function or declaration, one fallback occurrence, and so on. Each subagent may inspect the entire repository but concentrates all attention on exactly one assigned unit.
+Clean the final design introduced by a change. Review three categories separately: **comments**, **structure**, and **defensive design**. Prefer file-sized batches; split large files into cohesive portions that a reviewer can examine thoroughly. Batch size controls scheduling, not coverage or causal scope.
 
 ## Freeze the causal scope
 
-Resolve the integration base and freeze the original branch diff before editing. If a caller supplies a frozen scope, use it unchanged. Include dirty work only when requested or clearly part of the same task; preserve other dirty work.
+Resolve the integration base and freeze the original branch diff before editing. Use a caller-supplied frozen scope unchanged. Include dirty work only when requested or clearly part of the same task; preserve other dirty work.
 
 Keep these boundaries distinct:
 
 - **Finding roots:** original diff hunks and the symbols, flows, contracts, comments, and decisions they change.
-- **Read context:** unrestricted whole-file, caller, test, documentation, and history evidence used to understand one root.
+- **Read context:** unrestricted whole-file, caller, test, documentation, and history evidence needed to understand a root.
 - **Repair closure:** declarations, consumers, tests, docs, config, and protocols that must change to complete an eligible fix.
 
 Reading context does not create roots. Editing repair closure does not make the whole edited file a root. Tests are evidence and repair closure, not independent cleanup roots.
 
-## Lock reviewer granularity
+## Inventory units and form batches
 
-Set `units_per_reviewer = 1` unless the user explicitly requests a different cleanup review granularity.
+Build exhaustive inventories before dispatch. Give each unit a stable ID, `path:line`, complete logical content, and `scope_origin`. Keep original roots frozen and add repair-created units without deriving new roots from the whole latest diff.
 
-This is a hard invariant:
+### Comments
 
-- Never infer permission to batch units from urgency, token cost, unit count, similarity, adjacency, file locality, simplicity, available concurrency, or tool limitations.
-- Never let a workflow, orchestrator, or subagent combine units as an optimization.
-- Never assign one reviewer multiple units because they are generated, repetitive, trivial, or already reviewed elsewhere.
-- When concurrency is insufficient, dispatch more waves. Waiting changes scheduling, not granularity.
-- When no suitable workflow exists, continue one unit at a time. Missing tooling changes throughput, not granularity.
+One logical comment block is one unit. Inventory every block that contains an added or modified line, directly documents a changed declaration or flow, or may have become stale because a root changed its referent or contract. Include inline, doc, configuration, and test comments; inventory the entire logical block when one line changes.
 
-Only an explicit user instruction may change `units_per_reviewer`. Record the exact override and its requested maximum before dispatch. Apply it only to the current cleanup run unless the user states a broader policy. An instruction to “be faster”, “use fewer agents”, or “keep it lightweight” is not a granularity override unless it explicitly authorizes multiple review units per reviewer.
+From deleted hunk lines, record changed identifiers, numbers, times, versions, string/config values, paths, named modes, and behaviors. Cross-check these deleted referents against the comment inventory.
 
-Without a recorded explicit override, assigning two units to one reviewer invalidates the round.
+### Structure
 
-## Build exhaustive atomic inventories
+Inventory changed production functions, classes, interfaces, types, constant groups, exports, module boundaries, and cohesive control-flow decisions. Keep independently judgeable units distinguishable within a batch. Add multi-function flow units when needed without replacing function coverage. Record relevant callers, consumers, and contracts.
 
-Build inventories mechanically before dispatch. Give each unit a stable ID, `path:line`, complete logical content, and `scope_origin`. Keep the original inventories frozen; append units introduced by repairs without recomputing roots from the whole latest diff.
+### Defensive design
 
-Never combine multiple units merely because they are adjacent, similar, or in the same file.
+Inventory in-scope defenses, including:
 
-### Comment units
+- `??`, `?.`, fallback `||`, default parameters, optional fields and returns;
+- guard-style branches, capability checks, repeated validation, assertions, and error conversion;
+- catches that swallow errors, empty/default success responses, retries, and recovery paths;
+- compatibility shims, speculative handling of impossible states, and duplicated boundary normalization.
 
-One logical comment block is one unit. Inventory every block that:
+Exclude ordinary boolean expressions and business branches that do not defend against absence, invalidity, failure, or unavailable capabilities. Throwing guards and assertions remain reviewable defenses: their necessity and placement still need evidence.
 
-- contains an added or modified comment line in an original root or repair;
-- directly documents a declaration, value, branch, or flow changed by a root or repair; or
-- is unchanged but may have become stale because a root changed its symbol, literal, behavior, or contract.
+### Batching
 
-Include inline comments, doc comments, configuration comments, and test comments. When one line changes, inventory the entire logical block.
+Group units of the same category by file. For large files, use logical sections or cohesive declaration groups, keeping complete comment blocks and functions together. Choose smaller batches when density or complexity would compromise attention. Record each batch's category, file/section, and exact unit IDs; no fixed maximum unit count or user override is required.
 
-From deleted hunk lines, separately inventory changed identifiers, numbers, times, versions, string/config values, paths, named modes, and behaviors. These **deleted referents** are cross-checked against every comment unit.
+## Dispatch separate category reviews
 
-### Structure units
+Use read-only subagents with the current agent's model unless applicable instructions specify otherwise. Every prompt must include the frozen roots, accepted repair hunks, assigned batch and IDs, final-design overview, relevant inventory context, unrestricted read-context permission, and the causal-scope rule. State whether further delegation is allowed and its maximum recursion depth.
 
-One changed production function, class, interface, type, constant group, export, module boundary, or cohesive control-flow decision is one unit. Prefer the smallest independently judgeable unit. A multi-function flow may be an additional flow unit, but it never replaces the per-function units.
+Keep category assessments separate:
 
-Record the global callers, consumers, and contracts each unit may need as read context.
+- **Comments:** two independent reviews per batch, one for semantic necessity/final-state prose and one for concrete claims and referent provenance.
+- **Structure:** a dedicated structure review for each batch.
+- **Defensive design:** a dedicated defensive-design review for each batch.
 
-### Fallback units
+A reviewer may examine callers or contracts outside its batch when needed, but every finding must identify an assigned unit as `scope_origin`. File batching never authorizes unrelated findings in that file. Dispatch in waves when concurrency is limited.
 
-Each in-scope `??`, `?.`, fallback `||`, optional return, default parameter, capability guard, or guard-style `if` is one unit. Exclude boolean `||` and guards that already throw or assert.
+The primary agent independently reads every comment block and reconciles its two reviews.
 
-## Dispatch atomic reviewers
+## Require per-unit coverage
 
-Dispatch read-only reviewers using the strongest available model. Every prompt must contain:
+Require one coverage record per assigned ID, even when a reviewer handles many units. Each record needs location, verdict, and concrete evidence. Comment records also need purpose, clause-level reasoning, and provenance for concrete claims. Structure and defensive-design records need relevant caller/contract evidence; defensive-design records must explain the defended state and intended failure behavior.
 
-- the frozen roots and accepted repair hunks;
-- the complete assigned unit and stable ID;
-- the final-design overview and relevant inventory context;
-- permission to read any repository context needed; and
-- a rule that findings may concern only the assigned unit or its causal repair closure.
-
-Global context is unlimited; finding focus is atomic. A reviewer may locate a defect in a caller or contract outside the unit when the assigned unit caused or exposed it, but must identify the assigned unit as `scope_origin`.
-
-With the default `units_per_reviewer = 1`:
-
-- **Each comment unit gets two separate subagents:** one for semantic necessity/final-state prose and one for concrete-claim/referent provenance.
-- **Each structure unit gets its own structure subagent.**
-- **Each fallback unit gets its own fallback subagent.**
-- **No subagent receives two inventory IDs.**
-
-Do not cluster contiguous comments, sibling functions, repeated fallbacks, or simple units. If units exceed concurrency, dispatch in waves. If there are many units, use a workflow only when it preserves one isolated reviewer task per unit.
-
-When the user explicitly overrides granularity, a reviewer may receive at most the recorded number of units. The prompt and response must still keep separate IDs and separate coverage records for each unit. Never exceed the recorded maximum.
-
-The primary agent must independently read every comment unit and reconcile its two reviews. Subagents provide isolated attention and evidence; they do not replace primary-agent adjudication.
-
-## Require per-unit coverage evidence
-
-At default granularity, every subagent is assigned exactly one ID and must return exactly one coverage record:
-
-```json
-{
-  "coverage": [{
-    "id": "comment:C7",
-    "location": "path:line",
-    "verdict": "keep | rewrite | remove",
-    "purpose": "decision | invariant | constraint | evidence | none",
-    "claims": [{
-      "claim": "literal, symbol, behavior, or causal statement",
-      "evidence": "final-tree path:line, current contract, or permalink",
-      "status": "current | external | stale"
-    }],
-    "reason": "clause-level justification"
-  }],
-  "findings": [{
-    "location": "path:line",
-    "issue": "...",
-    "fix": "concrete change",
-    "scope_origin": "the assigned unit",
-    "causal_evidence": "why that unit created or exposed the issue"
-  }],
-  "summary": {
-    "reviewed": 1,
-    "assigned": 1,
-    "missing": [],
-    "duplicates": []
-  }
-}
-```
-
-For structure and fallback units, replace comment-specific fields with concise unit evidence.
-
-Without a user override, invalidate responses containing zero or multiple coverage records, another ID, missing verdict/evidence, or multiple review targets. With an override, require exactly one coverage record per assigned ID and `reviewed = assigned <= units_per_reviewer`.
-
-Finding-only responses are invalid. `{"findings":[]}` is never coverage proof.
+Each finding needs `location`, `issue`, a concrete `fix`, `scope_origin`, and `causal_evidence`. Require an exact coverage summary: `reviewed = assigned`, with no missing, duplicated, or unassigned IDs. Finding-only responses, including an empty findings list, do not prove coverage. Repair incomplete responses before counting a round.
 
 ## Validate causal scope
 
-Accept a finding only when it:
+Accept a finding only when it was introduced or materially worsened by an original root, concerns unchanged code made dead/inconsistent/redundant/stale/reachable/invalid by a root, or was introduced by an accepted repair.
 
-1. was introduced or materially worsened by an original root;
-2. concerns unchanged code made dead, inconsistent, redundant, stale, reachable, or invalid by a root; or
-3. was introduced by an accepted repair.
+Apply the counterfactual test: mentally revert the originating unit. If the same failure mode, severity, reachability, and materially identical repair remain, the issue is baseline debt. Adjacency and shared files are not causal evidence. Discard ordinary out-of-scope observations without editing or reporting them as skipped findings.
 
-Apply the counterfactual test: revert the originating unit mentally. If the same failure mode, severity, reachability, and materially identical repair remain, it is baseline debt and out of scope. Adjacency and shared files are not causal evidence.
+## Audit comments as final-state prose
 
-Discard ordinary out-of-scope observations without editing or reporting them as skipped findings.
-
-## Audit each comment as final-state prose
-
-Audit every clause independently. A useful clause never excuses a stale, obvious, historical, or unsupported clause in the same block.
-
-For each assigned comment, answer:
+Audit every clause independently:
 
 1. **Necessity:** What non-obvious decision, invariant, constraint, or evidence disappears if it is removed?
-2. **Final-state wording:** Does every clause describe only the current design, without requiring the branch diff or replaced implementation?
-3. **Claim verification:** Does every symbol, number, time/frequency, threshold, version, config value, named mode, exact behavior, and causal claim have a current owner or durable permalink?
-4. **Durability and locality:** Is every concrete detail necessary here and tied to its authority? Prefer the owning constant/config over duplicated magic literals.
-5. **Concision and voice:** Can the same non-obvious value be stated more briefly in author or passive voice?
+2. **Final-state wording:** Does it describe the current design without needing the diff or replaced implementation?
+3. **Claim verification:** Does every symbol, literal, threshold, version, named mode, behavior, and causal claim have a current owner or durable permalink?
+4. **Durability and locality:** Is each concrete detail necessary here and tied to its authority? Prefer owning constants/config over duplicated literals.
+5. **Concision and voice:** Can the value be stated more briefly in author or passive voice?
 
-Presume a referent stale when it occurs only on deleted lines or in pre-change history, names a removed concept, or explains how the branch differs from its base. Keep it only with independent current evidence.
+Presume a referent stale when it appears only in deleted lines/history or names a removed concept; retain it only with independent current evidence. Apply the clean-room test: would an author implementing the final design from scratch need this exact clause?
 
-Apply the clean-room test clause by clause:
+Remove obvious restatements, unsupported claims, temporary/uncommitted citations, user/agent voice, and unnecessary historical prose. Wording such as `instead of`, `rather than`, `no longer`, `now`, and exact prior values signals history requiring scrutiny. A rejected alternative belongs only when it remains a plausible current choice and its rejection records a durable decision.
 
-> Would an author implementing the final design from scratch need this exact statement without seeing the diff or knowing the replaced design?
+## Review structure
 
-If not, remove or rewrite it as a positive current invariant, constraint, or decision.
+Use global caller context to challenge indirection that hurts locality, confusing execution order, thin wrappers, single-implementation interfaces, primitive aliases, pass-through getters without business meaning, required business data modeled as optional, and production structure created only for tests.
 
-Treat `instead of`, `rather than`, `no longer`, `now`, `from`, `avoids the old`, and exact prior values as history signals. A rejected alternative belongs only when it remains a plausible current choice and the comment records the durable reason it must stay rejected.
+Remove causal patching traces: divergent sibling paths, obsolete names, unreleased shims, dead flags, re-export shims, and aliases retained just in case. Judge the coherent final architecture and complete repair closure, not the number of changed lines.
 
-Also flag obvious restatement, temporary/uncommitted citations, user or agent voice, and avoidable verbosity.
+## Challenge defensive design
 
-## Review each structure unit
-
-For each assigned function, declaration, or design unit, use global caller context and flag causal instances of:
-
-- indirection that hurts locality;
-- ordering that obscures execution flow;
-- thin wrappers, single-implementation interfaces, primitive aliases, or pass-through getters without business meaning;
-- optional fields or returns every business path requires;
-- production structure created only for tests; or
-- patching traces such as divergent sibling paths, obsolete names, unreleased shims, dead flags, re-export shims, and aliases kept just in case.
-
-The reviewer may require edits across the unit's complete repair closure.
-
-## Challenge each defensive fallback
-
-For each assigned fallback, trace actual callers, assignments, and boundary parsing. Types and hypothetical future callers are not evidence.
+Trace actual callers, assignments, parsing boundaries, and error contracts. Types and hypothetical future callers alone do not prove a defense necessary.
 
 | Verdict | Evidence | Action |
 |---|---|---|
-| Necessary | Concrete omitting path and domain-correct default | Keep |
-| Should propagate | Absence violates an invariant | Remove fallback or throw/assert |
-| Unreachable | Every business caller provides the value | Tighten type and repair closure |
-| Wrong default | Absence is real but fallback lies | Propagate, throw, or use correct value |
+| Necessary | A concrete valid absence/failure path with domain-correct handling | Keep at the appropriate boundary |
+| Should propagate | Absence/failure violates an invariant or recovery hides the error | Remove masking; propagate, throw, or assert |
+| Unreachable or redundant | Actual callers guarantee the value/state or an owning boundary already validates it | Tighten the contract and remove duplicate handling |
+| Wrong recovery | Failure is real but the default, retry, or conversion misrepresents it | Use domain-correct handling or propagate |
+| Speculative | No supported input, caller, or current requirement needs it | Remove the defense and its unnecessary machinery |
 
-Normalize external input once at its boundary. Challenge `Map.get`, `.find()`, and optional returns until a concrete valid-absence path is proven.
+Normalize external input once at its owning boundary. Challenge `Map.get`, `.find()`, optional returns, and catches until concrete valid absence/recovery semantics are established. Preserve the original error or its cause chain. Retain top-level error handling and domain defaults when their semantics genuinely require them. Do not add compatibility handling for old data without an explicit requirement.
 
-## Apply and iterate
+## Repair without increasing complexity
 
-Apply every validated eligible finding. Repair necessary closure while preserving atomic roots.
+A cleanup fix must not introduce higher complexity. Assess the full repair closure: control-flow branches and states, indirection, abstraction layers, dependencies, duplicated contracts, and the reasoning required to follow the behavior. Fewer lines alone do not prove simpler design.
 
-After repairs:
+Prefer removing unnecessary machinery, tightening contracts, consolidating boundary ownership, and simplifying flows. Do not replace a small defect with a new framework, generic wrapper, configuration mode, fallback chain, or speculative abstraction. If a proposed fix increases complexity, redesign it into a simpler or equally simple solution before applying it. A genuine correctness/product requirement needing more complexity belongs to separately authorized work; report that decision without applying it as cleanup or claiming zero-finding convergence while it remains unresolved.
 
-- append every repair-created comment, structure, and fallback unit;
-- rebuild the full logical block for changed comments;
-- re-dispatch fresh reviewers at the recorded granularity for original and repair units causally affected by the repair; and
-- never reuse a prior verdict after its unit changes.
+Apply every validated eligible cleanup fix with its necessary closure. After repairs, inventory new comments, structures, and defenses; rebuild changed logical units and obtain fresh category reviews for affected units. Never reuse a verdict after its unit changes.
 
-## Prove convergence
+## Prove convergence and report
 
-At default granularity, a round counts as zero-finding only when:
+Iterate until one fresh full round applies no repairs and has exact per-ID coverage for all original and repair units, separate category reviews, two complete comment reviews per batch, and primary-agent reconciliation. Verify that every accepted repair preserved or reduced complexity.
 
-- every inventory ID has its own subagent response;
-- every response reports `reviewed = assigned = 1` with the exact ID;
-- no response is missing, duplicated, multi-unit, or batched;
-- every unit has a verdict and evidence;
-- each comment has two independent complete reviews;
-- the primary agent reconciles comment-review disagreements; and
-- the full round applies no repairs.
-
-With an explicit override, use its recorded maximum and require exact per-ID coverage; all other convergence requirements remain unchanged.
-
-Iterate until one fresh full round satisfies every condition.
-
-## Report
-
-Report the recorded reviewer granularity and any user override, inventory counts by unit type, isolated subagent review count, rounds, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. Omit ordinary baseline debt.
+Report batch granularity, counts by category, reviewer count, rounds, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. Omit ordinary baseline debt.
 
 This skill does not commit or run tests unless the caller requests those actions.
