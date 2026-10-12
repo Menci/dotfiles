@@ -23,11 +23,13 @@ Confirm the intended base and record the exact PR head OID before final verifica
 
 ## Maintain accurate PR text
 
-Compare the author with the authenticated GitHub user. Assess the title and complete body against the final diff before editing.
+Compare the author with the authenticated GitHub user. Assess the title and complete body against the final diff before editing. Change the title wording only when its format is incorrect, it states something false, or the task changed and left it behind. Do not replace an accurate, correctly formatted, current title merely because another wording is also valid.
 
 For another person's PR, preserve an accurate, correctly formatted title and body. When the final diff has departed from the original description, rewrite the complete body within the author's existing format, headings, language, and level of detail. Update its verification status in that same format. Change the title only when it no longer describes the final scope or its format conflicts with the project's conventions. Do not impose a new template or retitle merely to match a preferred wording.
 
 For an owned PR, keep accurate text or rewrite it as a coherent description of the final diff, as if submitting it for the first time. Follow the repository template, use natural Markdown wrapping, and use task lists for the Test Plan when appropriate.
+
+Establish one canonical title for every PR. The GitHub PR title must equal that canonical title, and the squash subject must use the exact same text followed by ` (#N)`. This synchronization is mandatory even when neither title needs new wording. If either side differs, update the side that does not match the preserved or corrected canonical title before merging.
 
 For every rewrite, preserve reusable checked results, remove discarded approaches/review history, and remove personal information beyond identities already exposed by Git. Public GitHub/npm/CDN references are fine; machine-specific paths, unrelated handles, personal IPs, and private domains are not. Describe the final problem, behavior, decisions, and relevant validation. Write the whole revised body, not appended correction notes. Use a body file or structured tool argument to preserve its formatting. Do not post PR comments without separate authorization.
 
@@ -45,7 +47,7 @@ For browser checks, use repository headless tooling or an existing/temporary bro
 
 Write a coherent narrative of the final feature or fix, not the branch's evolution. Give the subject one intent and match recent base-branch commit style. If no honest unifying intent exists, surface the need to split the PR. End the squash subject with ` (#N)`. Wrap its body at approximately 72 columns unless the project consistently uses another width, and apply the PR body's personal-information rule.
 
-Use a preserved, accurate PR title as the subject wording where it meets commit conventions. If commit formatting differs, provide an explicit squash subject without changing an otherwise valid title on another person's PR. The squash command supplies its own subject; title synchronization is not mandatory.
+Use the canonical PR title as the squash subject wording and append ` (#N)`. If the title does not meet commit conventions, correct the canonical title and update the PR title before merging. Do not independently rewrite an already accurate, correctly formatted, current title or squash subject; synchronization requires identical wording, not unnecessary rewording.
 
 ### Retained human contributions
 
