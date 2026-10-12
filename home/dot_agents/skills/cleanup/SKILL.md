@@ -1,9 +1,11 @@
 ---
 name: cleanup
-description: Clean the final design of a change through separate comment, structure, and defensive-design reviews. Batch reviewers by file or cohesive portion of a large file, retain per-unit evidence and causal scope, and converge without increasing complexity or touching unrelated baseline debt.
+description: Run one explicitly requested cleanup cycle over a change through separate comment, structure, and defensive-design reviews, without increasing complexity or touching unrelated baseline debt.
 ---
 
 # Cleanup
+
+Run this skill only when the user explicitly invokes `$cleanup`. One invocation performs exactly one cleanup cycle over the current frozen scope. Edits made during the cycle do not invoke this skill again and do not start another cycle automatically.
 
 Clean the final design introduced by a change. Review three categories separately: **comments**, **structure**, and **defensive design**. Prefer file-sized batches; split large files into cohesive portions that a reviewer can examine thoroughly. Batch size controls scheduling, not coverage or causal scope.
 
@@ -114,12 +116,12 @@ A cleanup fix must not introduce higher complexity. Assess the full repair closu
 
 Prefer removing unnecessary machinery, tightening contracts, consolidating boundary ownership, and simplifying flows. Do not replace a small defect with a new framework, generic wrapper, configuration mode, fallback chain, or speculative abstraction. If a proposed fix increases complexity, redesign it into a simpler or equally simple solution before applying it. A genuine correctness/product requirement needing more complexity belongs to separately authorized work; report that decision without applying it as cleanup or claiming zero-finding convergence while it remains unresolved.
 
-Apply every validated eligible cleanup fix with its necessary closure. After repairs, inventory new comments, structures, and defenses; rebuild changed logical units and obtain fresh category reviews for affected units. Never reuse a verdict after its unit changes.
+Apply every validated eligible cleanup fix with its necessary closure. Verify the resulting diff and repair closure, but do not inventory the repairs as a new cleanup scope or begin another review cycle. A later cycle requires another explicit `$cleanup` invocation from the user.
 
-## Prove convergence and report
+## Complete and report the cycle
 
-Iterate until one fresh full round applies no repairs and has exact per-ID coverage for all original and repair units, separate category reviews, two complete comment reviews per batch, and primary-agent reconciliation. Verify that every accepted repair preserved or reduced complexity.
+Complete the cycle after the original inventory has exact per-ID coverage, separate category reviews, two complete comment reviews per batch, primary-agent reconciliation, applied eligible fixes, and verification that every accepted repair preserved or reduced complexity.
 
-Report batch granularity, counts by category, reviewer count, rounds, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. Omit ordinary baseline debt.
+Report batch granularity, counts by category, reviewer count, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. Omit ordinary baseline debt.
 
 This skill does not commit or run tests unless the caller requests those actions.
