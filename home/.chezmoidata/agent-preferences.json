@@ -7,8 +7,7 @@
         "claude-hud@claude-hud": true,
         "deno-skills@denoland-skills": true,
         "frontend-design@claude-plugins-official": true,
-        "modern-go-guidelines@goland-claude-marketplace": true,
-        "superpowers@claude-plugins-official": true
+        "modern-go-guidelines@goland-claude-marketplace": true
       },
       "extraKnownMarketplaces": {
         "anthropic-agent-skills": {
@@ -34,15 +33,8 @@
             "source": "github",
             "repo": "JetBrains/go-modern-guidelines"
           }
-        },
-        "superpowers-marketplace": {
-          "source": {
-            "source": "github",
-            "repo": "obra/superpowers-marketplace"
-          }
         }
       },
-      "effortLevel": "xhigh",
       "autoMemoryEnabled": false,
       "env": {
         "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "256000",
@@ -55,7 +47,6 @@
         "header": "",
         "path": [],
         "values": {
-          "model_reasoning_effort": "medium",
           "personality": "pragmatic",
           "approval_policy": "never",
           "sandbox_mode": "danger-full-access",
@@ -111,16 +102,6 @@
           "apps": false,
           "js_repl": false,
           "standalone_web_search": true
-        }
-      },
-      {
-        "header": "[plugins.\"superpowers@openai-curated\"]",
-        "path": [
-          "plugins",
-          "superpowers@openai-curated"
-        ],
-        "values": {
-          "enabled": true
         }
       },
       {
