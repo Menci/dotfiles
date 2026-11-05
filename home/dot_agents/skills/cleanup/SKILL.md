@@ -1,13 +1,13 @@
 ---
 name: cleanup
-description: Run one explicitly requested cleanup cycle over a change through separate comment, structure, and defensive-design reviews, without increasing complexity or touching unrelated baseline debt.
+description: Run one explicitly requested cleanup cycle over a change through separate comment, structure, and defensive-design reviews, without changing observable behavior, increasing complexity, or touching unrelated baseline debt.
 ---
 
 # Cleanup
 
 Run this skill only when the user explicitly invokes `$cleanup`. One invocation performs exactly one cleanup cycle over the current frozen scope. Edits made during the cycle do not invoke this skill again and do not start another cycle automatically.
 
-Clean the final design introduced by a change. Review three categories separately: **comments**, **structure**, and **defensive design**. Prefer file-sized batches; split large files into cohesive portions that a reviewer can examine thoroughly. Batch size controls scheduling, not coverage or causal scope.
+Clean the final design introduced by a change without changing its observable behavior. Review three categories separately: **comments**, **structure**, and **defensive design**. Prefer file-sized batches; split large files into cohesive portions that a reviewer can examine thoroughly. Batch size controls scheduling, not coverage or causal scope.
 
 ## Freeze the causal scope
 
@@ -100,6 +100,8 @@ Remove causal patching traces: divergent sibling paths, obsolete names, unreleas
 
 Trace actual callers, assignments, parsing boundaries, and error contracts. Types and hypothetical future callers alone do not prove a defense necessary.
 
+Distinguish data the codebase controls from data it does not. Contracts between the codebase's own components can be tightened, and violations should fail. For data the codebase does not control, declared types and documentation do not prove what actually arrives: establish the data actually encountered before removing tolerance for it or rejecting it.
+
 | Verdict | Evidence | Action |
 |---|---|---|
 | Necessary | A concrete valid absence/failure path with domain-correct handling | Keep at the appropriate boundary |
@@ -112,6 +114,8 @@ Normalize external input once at its owning boundary. Challenge `Map.get`, `.fin
 
 ## Repair without increasing complexity
 
+A cleanup fix must not change observable behavior for any input that previously succeeded: no new errors or rejections, and no changed results or output formats. A fix that needs such a change is a behavior decision; report it with the affected inputs and evidence instead of applying it.
+
 A cleanup fix must not introduce higher complexity. Assess the full repair closure: control-flow branches and states, indirection, abstraction layers, dependencies, duplicated contracts, and the reasoning required to follow the behavior. Fewer lines alone do not prove simpler design.
 
 Prefer removing unnecessary machinery, tightening contracts, consolidating boundary ownership, and simplifying flows. Do not replace a small defect with a new framework, generic wrapper, configuration mode, fallback chain, or speculative abstraction. If a proposed fix increases complexity, redesign it into a simpler or equally simple solution before applying it. A genuine correctness/product requirement needing more complexity belongs to separately authorized work; report that decision without applying it as cleanup or claiming zero-finding convergence while it remains unresolved.
@@ -122,6 +126,6 @@ Apply every validated eligible cleanup fix with its necessary closure. Verify th
 
 Complete the cycle after the original inventory has exact per-ID coverage, separate category reviews, two complete comment reviews per batch, primary-agent reconciliation, applied eligible fixes, and verification that every accepted repair preserved or reduced complexity.
 
-Report batch granularity, counts by category, reviewer count, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. Omit ordinary baseline debt.
+Report batch granularity, counts by category, reviewer count, fixes/files, verification, demonstrably wrong rejected findings, and excluded dirty work. List every observable behavior change separately with the affected inputs, before and after behavior, and evidence; state "no observable behavior change" only when that holds. Omit ordinary baseline debt.
 
 This skill does not commit or run tests unless the caller requests those actions.
