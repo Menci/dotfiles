@@ -32,13 +32,17 @@ symlink. Repository-managed skills include direct file processing for
 Synthesizer V 1 and 2, Melodyne, and ACE Studio.
 
 `home/.chezmoidata/agent-preferences.json` contains portable Claude and Codex
-preferences: interface behavior, reasoning effort, execution preferences,
-plugin selections, and Claude session limits and marketplace registrations.
-The modifier templates merge these preferences into application-owned files.
-Codex assignments already carrying the intended values retain their formatting;
+preferences: interface behavior, execution preferences, plugin selections,
+and Claude session limits and marketplace registrations. The modifier
+templates merge these preferences into application-owned files. Codex
+assignments already carrying the intended values retain their formatting;
 unmanaged assignments and comments remain intact. Claude merges named entries
 inside its environment, plugin, and marketplace maps so additional local entries
 survive.
+
+Per-session settings such as reasoning effort stay local: they change from
+conversation to conversation, so managing them would only let an apply
+overwrite the current choice.
 
 Provider credentials and model routing, project trust, installed-tool paths,
 marketplace installation paths, and generated onboarding state remain local.
